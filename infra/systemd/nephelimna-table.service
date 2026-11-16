@@ -1,5 +1,5 @@
 [Unit]
-Description=Nephelimna table service: keeper, bots, faucet and RPC proxy
+Description=Nephelimna sea service: keeper, board, faucet, RPC proxy and presence
 After=network-online.target
 Wants=network-online.target
 

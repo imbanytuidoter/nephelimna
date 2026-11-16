@@ -1,11 +1,11 @@
 # Nephelimna
 
-A 3D sea fishing game where the lake, your depth and bait, the hidden nets and every score stay encrypted on Zama FHEVM until the round ends.
+A 3D sea fishing game on one always-on sealed sea: what lives in every square, your depth and bait, the hidden nets and every total stay encrypted on Zama FHEVM.
 
 Built for the Zama Developer Program, Mainnet Season 5, Confidential Gaming. Sepolia only.
 
 - Play: https://nephelimna.imbanytui.xyz/sea/
-- Contract: [`0xB3757D000DBB7D6423352C7106FDb9950DAD7dCC`](https://sepolia.etherscan.io/address/0xB3757D000DBB7D6423352C7106FDb9950DAD7dCC) (`NepheTable`, Sepolia)
+- Contract: [`0x755cBa7f208918E2806aaeeE511a7d57c1749eEA`](https://sepolia.etherscan.io/address/0x755cBa7f208918E2806aaeeE511a7d57c1749eEA) (`NepheSea`, Sepolia)
 - Video: VIDEO_ID
 
 ## Play it in two minutes
@@ -13,53 +13,53 @@ Built for the Zama Developer Program, Mainnet Season 5, Confidential Gaming. Sep
 No wallet and no test ETH needed. The page makes a session key in your browser and a faucet tops it up.
 
 1. Open the link. You start at the pier with a `Controls` window on the left. Every row in it is also a button.
-2. Press **Join round** in the panel at the top (only offered near the harbour). The lobby starts 40 seconds after the first person joins. Four bots fill the table.
-3. Sail anywhere (`W A S D`), press `G` to drop anchor, then hold `Space` or the mouse to aim, let go to cast.
-4. Pick depth (`1 2 3`) and bait (`B`) before the cast. The float waits 20 to 50 seconds while the cast is sealed, sent and decrypted (the big button shows the step and the seconds), then the fish bites or the line comes back empty.
-5. Three tides of 2.5 minutes, six casts per tide. Then the contract opens the scores, and you can open the whole lake on the chart (`M`) and press **Verify round**.
+2. Sail into the 8 by 8 chart squares around the island (`W A S D`, chart on `M`), press `G` to drop anchor.
+3. Pick depth (`1 2 3`) and bait (`B`), hold `Space` or the mouse to aim, let go to cast. Your first cast puts your boat on chain, once per browser.
+4. The float waits while the cast is sealed, mined and decrypted for you; the big button shows each step with its seconds. Then the fish bites and you reel it in, or the line comes back empty.
+5. Your total is shown at the top and only you can read it. **Post my score** opens it once with a proof and puts it on the **Board**.
 
-Outside a round the sea is free roam: fish, sell at the market, buy a net and flags. That part runs in the browser only.
+Coins, the fish market, flags and the net purchase stay in the browser. Every fish comes from the sealed sea.
 
 ## What is encrypted
 
-| Thing | Who can see it during the round | How |
+| Thing | Who can see it | How |
 |---|---|---|
-| The lake: 64 squares, three depths each, rarity and stock | nobody, not even the keeper | `FHE.randEuint16` per square, never decrypted until the end |
-| The Leviathan's square | nobody | `FHE.randEuint8(64)` |
-| Depth and bait of a cast | only the caster | one encrypted `euint8` input per cast, never revealed, even after the round |
+| The sea: 64 squares, three depths each, rarity and stock | nobody, not even the keeper | `FHE.randEuint16` per square, never decrypted |
+| The Leviathan's square | nobody | `FHE.randEuint8(64)`, moves when it is caught |
+| Depth and bait of a cast | only the caster | one encrypted `euint8` input per cast, never revealed |
 | What a cast caught | only the caster | result handles are allowed to the caster's session key |
-| Sonar: is a rare fish or the Leviathan in a neighbouring square | only the caster | encrypted flags computed over the eight neighbours |
-| Hidden nets: two squares per tide | only their owner | encrypted inputs; a net takes every common or uncommon fish a rival lands there and scores it three times |
-| Scores | nobody | encrypted counters, updated for every seat on every cast |
+| Sonar: is a rare fish or the Leviathan in a neighbouring square | only the caster | encrypted flags over the eight neighbours |
+| Hidden nets | only their owner | the square is an encrypted input; a net takes a rival's common or uncommon catch there and scores it three times |
+| Totals | only their owner, until posted | encrypted counters, readable by the owner's key |
 
-Public by design: who sits at the table, which square each cast went to, how many casts are left, the tide.
+Public by design: who joined, which square each cast went to, who set a net and when (not where), posted totals.
 
 ## What a rival cannot learn
 
-- **Whether your cast caught anything.** A miss, a catch, the Leviathan and a netted catch run the same sequence of FHE operations. Gas and HCU depend only on the public square and seat count. Encrypted conditions are never used in `if`, `require` or `revert`, only `FHE.select`.
-- **Whose net fired.** Every opponent's score handle is rewritten on every cast, hit or not.
-- **What is left in a square.** Stock goes down under encryption.
+- **Whether your cast caught anything.** A miss, a catch, the Leviathan and a netted catch run the same sequence of FHE operations. A fresh square is rolled on every cast and kept only after a catch, with `FHE.select`. Gas and HCU depend only on the public square and the number of live nets. Encrypted conditions are never used in `if`, `require` or `revert`.
+- **Where the rare fish are.** A square that gave a fish is rerolled in the same transaction, so a catch tells nobody, not even you, what is there now.
+- **Where a net is.** Nets live in eight global slots, so writing one never shows its square. Every live net of another player has its owner's total rewritten on every cast, hit or not.
 
 ## Fairness
 
-- **Randomness is on chain.** The keeper only calls `fillLake`; it supplies no values and cannot read what was generated.
-- **Scores are proven.** `revealScores` accepts cleartexts only with a KMS proof checked by `FHE.checkSignatures` against the handles the contract stored itself. A forged value and a replayed reveal are both rejected; both were tried on Sepolia.
-- **Stages only move forward** and each reveal runs once.
-- **Verify round** in the game reads Sepolia and the Zama relayer directly, not our server, and checks: final scores, seat keys, cast counts against the rules, that the total score is possible for that many casts, and that the opened lake matches a fresh public decryption.
+- **Randomness is on chain.** The keeper only calls `fillSea`; it supplies no values and cannot read what was generated. Restocking happens inside the player's own cast.
+- **Posted totals are proven.** `postScore` marks the stored total handle for public decryption; `confirmScore` accepts the cleartext only with a KMS proof checked by `FHE.checkSignatures` against that stored handle, once. A forged value and a replayed proof are both rejected; both were tried on Sepolia.
+- **Every board row links to the transaction** that checked its proof.
 - **Limit of the check:** depth and bait stay encrypted forever, so nobody can replay a single cast. Trust in the per-cast arithmetic comes from the contract code and the FHEVM, not from a replay.
 
-## Measured on Sepolia (2026-11-14)
+## Measured on Sepolia (2026-11-16)
 
 | Action | Gas |
 |---|---|
-| Cast with 10 seats and 9 nets set | 5.9M to 6.5M |
-| Fill 4 squares of the lake | 4.35M |
-| Join | 0.75M |
-| Set nets | 0.83M |
-| Reveal scores, 10 seats | 0.53M |
-| Open the lake, 64 squares | 8.07M |
+| Cast, no live nets | 3.8M to 4.3M |
+| Cast with 6 live nets of other players | 6.1M |
+| Fill 4 squares of the sea | 4.35M |
+| Join | 0.64M |
+| Set a hidden net | 0.59M |
+| Post a total | 0.29M |
+| Confirm a posted total with its proof | 0.48M |
 
-A cast takes 20 to 50 seconds end to end in a browser: about 4 s to encrypt, 5 to 12 s to mine, 3 to 9 s for the user decryption, plus retries when a node lags. The slowest test cast took 72 s.
+A cast took 12 to 56 seconds from encryption to a decrypted result: about 4 to 7 s to encrypt, 5 to 12 s to mine, 3 to 44 s for the user decryption. Opening a posted total took 3 s once, and more than ten minutes once, so the service keeps retrying until the proof arrives.
 
 ## How it is built
 
@@ -67,14 +67,14 @@ A cast takes 20 to 50 seconds end to end in a browser: about 4 s to encrypt, 5 t
 apps/sea            game client: three.js (WebGL2), plain JS, no framework
   src/ocean         vendored Ultra Water ocean (MIT), see its LICENSE and notices
   src/game          our code: boat, harbour, fishing, market, chart
-  src/game/round    chain mode: session key, sealed casts, nets, final, verify
-contracts           NepheTable + libraries NepheLake, NepheCast, NepheTraps, NepheScore, NepheReveal
+  src/game/sea      chain side: session key, sealed casts, hidden nets, totals, board
+contracts           NepheSea + libraries NepheLake, NepheCast, NepheTraps, NepheScore, NepheReveal
 packages/rules      rules engine shared by client, service and parity tests; contract ABI
-services/bots       table service: keeper, bots, faucet for guest keys, RPC proxy
+services/bots       sea service: keeper, board, faucet for guest keys, RPC proxy, presence
 infra               Caddy site and systemd unit
 ```
 
-The browser encrypts and sends its own casts with `@zama-fhe/sdk`. The table service never sees depth, bait or a catch. It opens rounds, stocks the lake ahead of time, turns the tides, plays the bots and submits the proven reveal.
+The browser encrypts and sends its own casts with `@zama-fhe/sdk` and decrypts its own results. The sea service never sees depth, bait, a catch or a total before it is posted. It fills the sea once, reads the contract events for the board, and submits the proven confirmation of each posted total.
 
 ## Run it
 
@@ -85,7 +85,7 @@ pnpm install
 pnpm test
 ```
 
-Contract tests (19, mock FHEVM, includes HCU measurements, a forged reveal and a replayed proof):
+Contract tests (mock FHEVM, includes HCU measurements, a forged total and a replayed proof):
 
 ```bash
 pnpm --filter @nephelimna/contracts test
@@ -97,7 +97,7 @@ Client in dev mode, proxying `/api` to a local table service on port 3430:
 pnpm --filter @nephelimna/sea dev
 ```
 
-Table service. It needs `SEPOLIA_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `TABLE_ADDRESS`, `BOT_SEED` and `TABLE_STATE_FILE` in the environment:
+Sea service. It needs `SEPOLIA_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `SEA_ADDRESS` and `SEA_STATE_FILE` in the environment, and `SEA_START_BLOCK` set to the deploy block on first start:
 
 ```bash
 cd services/bots && node --import tsx src/table/main.ts
@@ -105,18 +105,19 @@ cd services/bots && node --import tsx src/table/main.ts
 
 On a server, `infra/systemd/nephelimna-table.service` runs it as user `nephelimna` from `/srv/nephelimna` with Node 22.23.4 or newer on the path and the env files in `/etc/nephelimna`. Put a different user, checkout or Node path in a drop-in, `/etc/systemd/system/nephelimna-table.service.d/host.conf`; clear `EnvironmentFile=` and `ExecStart=` there before setting new values.
 
-A full scripted round on Sepolia with gas and latency rows:
+A scripted run on a fresh sea on Sepolia with gas and latency rows (fill, casts with and without nets, a posted total with a forged and a replayed proof):
 
 ```bash
-cd contracts && npx hardhat run scripts/live-round.ts --network sepolia
+cd contracts && npx hardhat run scripts/live-sea.ts --network sepolia
 ```
 
 ## Known limits
 
-- Guest keys live in the browser's local storage. Clearing it loses the seat.
-- The faucet and the bots are paid by one keeper key; the faucet is rate limited per address, per IP and per day.
+- Guest keys live in the browser's local storage. Clearing it loses the boat and its total.
+- The faucet and the keeper are paid by one key; the faucet is rate limited per address, per IP and per day.
 - Coins, the net purchase and flags are local to the browser and are not on chain.
-- The sonar fires often because rare fish are common in the current lake tables.
+- A posted total is public at that moment; the difference between two posts shows what was caught in between. The player decides when to post.
+- The sonar fires often because rare fish are common in the current sea tables.
 - Wallet connect is not wired yet; every player is a guest.
 
 ## Credits and licences
