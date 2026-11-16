@@ -233,7 +233,6 @@
     }
     .net-title { padding-right: 16px; font: 700 13px/1.15 ui-sans-serif, system-ui, sans-serif; }
     .net-detail { font: 500 11px/1.25 ui-sans-serif, system-ui, sans-serif; opacity: 0.78; }
-    #fish-net.ready { color: #0b1518; background: var(--accent); }
     @media (hover: none) { #fishing kbd { display: none; } }
     @keyframes pulse { to { transform: scale(1.06); } }
     #catch-card {
@@ -268,49 +267,39 @@
     #progress-open.attention { color: #0b1518; background: var(--accent); animation: progress-pulse 1.6s ease-in-out infinite; }
     @keyframes progress-pulse { 50% { box-shadow: 0 0 0 6px rgba(242, 246, 244, 0.28); } }
     @media (prefers-reduced-motion: reduce) { #progress-open.attention { animation: none; } }
-    :is(#progress, #rename) .warn { padding: 10px 12px; border-radius: 10px; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
-    :is(#progress, #rename) { max-width: min(92vw, 420px); padding: 18px; border: 0; border-radius: 14px; color: var(--ink); background: rgba(10, 20, 24, 0.96); box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.25), 0 20px 50px rgba(0, 0, 0, 0.5); }
-    :is(#progress, #rename)::backdrop { background: rgba(0, 0, 0, 0.55); }
-    :is(#progress, #rename) h2 { margin: 0 0 8px; font-size: 18px; }
-    :is(#progress, #rename) p { margin: 0 0 12px; font-size: 13px; line-height: 1.45; opacity: 0.9; }
-    :is(#progress, #rename) .row { display: flex; gap: 8px; margin-bottom: 14px; }
-    :is(#progress, #rename) input { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid rgba(242, 246, 244, 0.3); border-radius: 10px; font: 600 13px ui-monospace, Menlo, monospace; color: var(--ink); background: rgba(255, 255, 255, 0.06); }
-    :is(#progress, #rename) button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer; font: 700 13px ui-sans-serif, system-ui, sans-serif; color: #0b1518; background: var(--accent); }
-    :is(#progress, #rename) button.quiet { color: var(--ink); background: rgba(255, 255, 255, 0.14); }
+    :is(#progress, #rename, #board) .warn { padding: 10px 12px; border-radius: 10px; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
+    :is(#progress, #rename, #board) { max-width: min(92vw, 420px); padding: 18px; border: 0; border-radius: 14px; color: var(--ink); background: rgba(10, 20, 24, 0.96); box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.25), 0 20px 50px rgba(0, 0, 0, 0.5); }
+    :is(#progress, #rename, #board)::backdrop { background: rgba(0, 0, 0, 0.55); }
+    :is(#progress, #rename, #board) h2 { margin: 0 0 8px; font-size: 18px; }
+    :is(#progress, #rename, #board) p { margin: 0 0 12px; font-size: 13px; line-height: 1.45; opacity: 0.9; }
+    :is(#progress, #rename, #board) .row { display: flex; gap: 8px; margin-bottom: 14px; }
+    :is(#progress, #rename, #board) input { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid rgba(242, 246, 244, 0.3); border-radius: 10px; font: 600 13px ui-monospace, Menlo, monospace; color: var(--ink); background: rgba(255, 255, 255, 0.06); }
+    :is(#progress, #rename, #board) button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer; font: 700 13px ui-sans-serif, system-ui, sans-serif; color: #0b1518; background: var(--accent); }
+    :is(#progress, #rename, #board) button.quiet { color: var(--ink); background: rgba(255, 255, 255, 0.14); }
     #progress-status { min-height: 18px; margin: 0; font-size: 12px; }
-    #round {
-      position: fixed; left: 50%; top: max(66px, calc(env(safe-area-inset-top) + 52px)); transform: translateX(-50%); width: max-content; max-width: min(92vw, 420px);
-      box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 8px 12px 8px 14px;
+    #sea {
+      position: fixed; left: 50%; top: max(66px, calc(env(safe-area-inset-top) + 52px)); transform: translateX(-50%); width: max-content; max-width: min(92vw, 440px);
+      box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 8px 8px 8px 14px;
       border-radius: 12px; background: var(--shade); backdrop-filter: blur(6px); border-left: 3px solid var(--accent);
     }
-    #round[hidden], #round-join[hidden], #round-final[hidden] { display: none; }
-    #round[data-phase="fishing"] { border-left-color: #8fd6c8; }
-    #round-line { font: 700 13px ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-    #round-detail { grid-column: 1; font: 500 11px ui-monospace, Menlo, monospace; letter-spacing: 0.03em; opacity: 0.82; }
-    #round-detail:empty { display: none; }
-    #round-join { grid-column: 2; grid-row: 1 / span 2; min-height: 44px; padding: 6px 14px; border: 0; border-radius: 10px; cursor: pointer; font: 700 13px ui-sans-serif, system-ui, sans-serif; color: #0b1518; background: var(--accent); }
-    #round-join:focus-visible, #round-final-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-    #round-final {
-      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92vw, 380px); max-height: 82vh; overflow: auto; box-sizing: border-box;
-      padding: 18px; border-radius: 14px; display: flex; flex-direction: column; gap: 12px; background: rgba(10, 20, 24, 0.92); backdrop-filter: blur(8px);
-      box-shadow: 0 0 0 1px rgba(240, 195, 122, 0.5), 0 14px 40px rgba(0, 0, 0, 0.5);
-    }
-    #round-final h2 { margin: 0; font-size: 18px; }
-    #round-final p { margin: 0; font-size: 12px; opacity: 0.8; }
-    #round-final-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    #round-final-list li { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.07); }
-    #round-final-list li.mine { box-shadow: inset 0 0 0 2px var(--accent); }
-    #round-final-list i { font: 700 12px ui-monospace, Menlo, monospace; font-style: normal; opacity: 0.7; }
-    #round-final-list b { color: var(--accent); font-variant-numeric: tabular-nums; }
-    #round-verify { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-    #round-verify:empty { display: none; }
-    #round-verify li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); }
-    #round-verify li b { font: 700 11px ui-monospace, Menlo, monospace; color: #7fd08a; }
-    #round-verify li.bad b { color: #ff7a66; }
-    #round-verify li span { opacity: 0.78; display: block; font-size: 11px; }
-    #round-lake, #round-check { color: #0b1518; background: var(--accent); }
-    #round-check:disabled { opacity: 0.5; cursor: default; }
-    #round-final-close { min-height: 44px; border: 0; border-radius: 10px; cursor: pointer; font: 700 14px ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: rgba(255, 255, 255, 0.14); }
+    #sea[data-phase="fishing"], #sea[data-phase="posting"] { border-left-color: #8fd6c8; }
+    #sea[data-phase="offline"] { border-left-color: rgba(242, 246, 244, 0.35); }
+    #sea-line { font: 700 13px ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    #sea-detail { grid-column: 1; font: 500 11px/1.35 ui-sans-serif, system-ui, sans-serif; opacity: 0.82; }
+    #sea-detail:empty { display: none; }
+    .sea-actions { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; }
+    .sea-actions button { min-height: 40px; padding: 4px 12px; border: 0; border-radius: 10px; cursor: pointer; font: 700 12px ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: rgba(242, 246, 244, 0.12); }
+    .sea-actions #sea-post { color: #0b1518; background: var(--accent); }
+    .sea-actions button[hidden] { display: none; }
+    .sea-actions button:focus-visible, #board-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    #board-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: min(52vh, 420px); overflow-y: auto; }
+    #board-list li { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.07); }
+    #board-list li.mine { box-shadow: inset 0 0 0 2px var(--accent); }
+    #board-list i { font: 700 12px ui-monospace, Menlo, monospace; font-style: normal; opacity: 0.7; }
+    #board-list span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #board-list a { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; text-decoration: none; }
+    #board-list a:hover, #board-list a:focus-visible { text-decoration: underline; }
+    #board-close { min-height: 44px; border: 0; border-radius: 10px; cursor: pointer; font: 700 14px ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: rgba(255, 255, 255, 0.14); }
     #help {
       position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: min(318px, calc(100vw - 32px));
       box-sizing: border-box; padding: 10px; border-radius: 14px; background: rgba(8, 16, 19, 0.42); backdrop-filter: blur(7px);
@@ -339,7 +328,7 @@
     .on-deck #trade-prompt { display: none; }
     @media (max-width: 560px) and (orientation: portrait) {
       #mode-toggle { left: max(16px, env(safe-area-inset-left)); transform: none; top: max(86px, calc(env(safe-area-inset-top) + 72px)); max-width: calc(100vw - 150px); padding: 6px 12px; font-size: 12px; text-align: left; }
-      #round { left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); transform: none; top: max(306px, calc(env(safe-area-inset-top) + 292px)); width: auto; max-width: none; }
+      #sea { left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); transform: none; top: max(306px, calc(env(safe-area-inset-top) + 292px)); width: auto; max-width: none; }
       .on-deck #help { top: max(380px, calc(env(safe-area-inset-top) + 366px)); }
     }
     #rotate { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; color: var(--ink); background: #0b1518; font: 600 18px/1.4 ui-sans-serif, system-ui, sans-serif; }
@@ -426,22 +415,21 @@
     <header><b>Controls</b><button id="help-toggle" type="button" aria-controls="help-list">Hide (H)</button></header>
     <ul id="help-list"></ul>
   </aside>
-  <div id="round" role="status" aria-live="polite" hidden>
-    <span id="round-line"></span>
-    <span id="round-detail"></span>
-    <button id="round-join" type="button" hidden>Join round</button>
-  </div>
-  <div id="round-final" role="dialog" aria-label="Round result" hidden>
-    <h2>Round result</h2>
-    <ol id="round-final-list"></ol>
-    <p id="round-final-note"></p>
-    <ul id="round-verify" aria-live="polite"></ul>
-    <div class="actions">
-      <button id="round-lake" type="button">Lake on the chart</button>
-      <button id="round-check" type="button">Verify round</button>
+  <div id="sea" role="status" aria-live="polite">
+    <span id="sea-line"></span>
+    <span id="sea-detail"></span>
+    <div class="sea-actions">
+      <button id="sea-post" type="button" hidden>Post my score</button>
+      <button id="sea-board" type="button">Board</button>
     </div>
-    <button id="round-final-close" type="button">Close</button>
   </div>
+  <dialog id="board" aria-labelledby="board-title">
+    <h2 id="board-title">Sealed sea board</h2>
+    <p>Every total stays encrypted until its owner posts it. Posting opens it once with a proof from Zama that the contract checks.</p>
+    <ol id="board-list"></ol>
+    <p id="board-note"></p>
+    <button id="board-close" type="button">Close</button>
+  </dialog>
   <div id="catch-card" role="status" aria-live="polite" hidden>
     <img id="catch-image" alt="" hidden />
     <b id="catch-name"></b>
@@ -465,7 +453,7 @@
     </section>
     <section class="pane" id="market-pane-gear" role="tabpanel" aria-labelledby="market-tab-gear" hidden>
       <ul class="gear">
-        <li><b>Fishing net</b><p id="market-net-note"></p><span id="market-net-slot"><button class="primary" id="market-net" type="button">Buy</button><span class="owned" id="market-net-owned">Owned</span></span></li>
+        <li><b>Hidden net</b><p id="market-net-note"></p><span id="market-net-slot"><button class="primary" id="market-net" type="button">Buy</button><span class="owned" id="market-net-owned">Owned</span></span></li>
       </ul>
     </section>
     <section class="pane" id="market-pane-flags" role="tabpanel" aria-labelledby="market-tab-flags" hidden>

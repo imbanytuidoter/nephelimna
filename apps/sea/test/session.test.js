@@ -2,24 +2,14 @@ import { describe, expect, it } from "vitest";
 import { parseSession, serializeSession } from "../src/game/session.js";
 
 const sizes = { depths: 3, baits: 3 };
-const snap = { x: 100, z: -200, heading: 1.5, depth: 2, bait: 1, net: { phase: "out", x: 90, z: -190, time: 20 } };
+const snap = { x: 100, z: -200, heading: 1.5, depth: 2, bait: 1 };
 
 describe("session", () => {
-  it("restores position, gear and a net that kept filling while away", () => {
+  it("restores position and gear, and still reads a save from before nets went on chain", () => {
     const saved = serializeSession(snap, 1_000_000);
-    const back = parseSession(saved, 1_000_000 + 30_000, sizes);
-    expect(back).toMatchObject({ x: 100, z: -200, heading: 1.5, depth: 2, bait: 1 });
-    expect(back.net).toEqual({ phase: "out", x: 90, z: -190, time: 50 });
-  });
-
-  it("has no net when none was out", () => {
-    const saved = serializeSession({ ...snap, net: { phase: "stowed", time: 0, x: 0, z: 0 } }, 0);
-    expect(parseSession(saved, 10, sizes).net).toBeNull();
-  });
-
-  it("caps the time spent away", () => {
-    const saved = serializeSession(snap, 0);
-    expect(parseSession(saved, 1e12, sizes).net.time).toBe(20 + 6 * 3600);
+    expect(parseSession(saved, 1_000_000 + 30_000, sizes)).toEqual({ x: 100, z: -200, heading: 1.5, depth: 2, bait: 1 });
+    const old = JSON.stringify({ ...JSON.parse(saved), net: { x: 90, z: -190, time: 20 } });
+    expect(parseSession(old, 1_000_000, sizes)).toEqual({ x: 100, z: -200, heading: 1.5, depth: 2, bait: 1 });
   });
 
   it("rejects garbage and positions outside the chart", () => {

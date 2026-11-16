@@ -1,9 +1,9 @@
-import { Bait, Depth, Rarity } from "@nephelimna/rules";
+import { Rarity } from "@nephelimna/rules";
 import { describe, expect, test } from "vitest";
 import { FLAGS, FLAG_PRICE } from "../src/game/flags.js";
 import { PRICES, addCatch, buyFlag, buyNet, createHold, holdValue, landFish, parseHold, sellAll } from "../src/game/hold.js";
-import { cellIndexAt, createLake, haulNet, haulNetArea, stockAt, tryCast } from "../src/game/fishing/lake.js";
-import { NET, createNet, netFish, stepNet } from "../src/game/fishing/net.js";
+import { cellIndexAt } from "../src/game/fishing/lake.js";
+import { NET } from "../src/game/fishing/net.js";
 import { ROD, castDistance, createRod, flightTime, stepRod } from "../src/game/fishing/rod.js";
 import { LOOT, applyLoot, rollLoot } from "../src/game/fishing/loot.js";
 import { CHEST, SPECIES, difficulty, pickSpecies, rollFish } from "../src/game/fishing/species.js";
@@ -23,30 +23,8 @@ describe("lake", () => {
     expect(cellIndexAt(1700, 0)).toBe(-1);
   });
 
-  test("a catch uses up stock only when it is committed", () => {
-    const lake = { cells: createLake(seeded(1)).cells.map(() => [{ rarity: Rarity.Common, stock: 1 }, { rarity: Rarity.None, stock: 0 }, { rarity: Rarity.None, stock: 0 }]) };
-    const first = tryCast(lake, 5, Depth.Surface, Bait.Worm);
-    expect(first.caught).toBe(true);
-    expect(tryCast(lake, 5, Depth.Surface, Bait.Worm).caught).toBe(true);
-    const after = first.commit();
-    expect(tryCast(after, 5, Depth.Surface, Bait.Worm).caught).toBe(false);
-    expect(tryCast(after, 6, Depth.Surface, Bait.Worm).caught).toBe(true);
-  });
 
-  test("the wrong bait or depth catches nothing", () => {
-    const lake = { cells: [[{ rarity: Rarity.Mythic, stock: 1 }, { rarity: Rarity.None, stock: 0 }, { rarity: Rarity.None, stock: 0 }]] };
-    expect(tryCast(lake, 0, Depth.Surface, Bait.Worm).caught).toBe(false);
-    expect(tryCast(lake, 0, Depth.Bottom, Bait.LiveFish).caught).toBe(false);
-    expect(tryCast(lake, 0, Depth.Surface, Bait.LiveFish).caught).toBe(true);
-  });
 
-  test("a net takes every common and uncommon fish in the square and leaves the rare ones", () => {
-    const lake = { cells: [[{ rarity: Rarity.Common, stock: 2 }, { rarity: Rarity.Rare, stock: 1 }, { rarity: Rarity.Uncommon, stock: 2 }]] };
-    const { lake: after, catches } = haulNet(lake, 0);
-    expect(catches).toHaveLength(4);
-    expect(after.cells[0][1].stock).toBe(1);
-    expect(haulNet(after, 0).catches).toHaveLength(0);
-  });
 });
 
 describe("rod", () => {
@@ -234,44 +212,6 @@ describe("rod", () => {
   });
 });
 
-describe("net area haul", () => {
-  test("spills into neighbouring squares and never takes more than asked", () => {
-    const lake = createLake(() => 0.9);
-    const taken = haulNetArea(lake, 27, 5);
-    expect(taken.catches.length).toBeLessThanOrEqual(5);
-    expect(haulNetArea(lake, -1, 5).catches).toEqual([]);
-  });
-});
-
-describe("net", () => {
-  const still = { owned: true, canFish: true, x: 0, z: 0 };
-
-  test("cannot be set without owning one", () => {
-    expect(stepNet(createNet(), FRAME, { pressed: true }, { ...still, owned: false }).event).toBe("no-net");
-  });
-
-  test("can be set from anywhere on deck once the boat is at anchor", () => {
-    expect(stepNet(createNet(), FRAME, { pressed: true }, still).event).toBe("set");
-  });
-
-  test("stays out and fills one fish per interval up to capacity", () => {
-    let net = stepNet(createNet(), FRAME, { pressed: true }, still).net;
-    expect(net.phase).toBe("out");
-    net = { ...net, time: NET.fillEvery * 3.5 };
-    expect(netFish(net)).toBe(3);
-    expect(netFish({ ...net, time: 10000 })).toBe(NET.capacity);
-  });
-
-  test("hauls the accumulated fish when close and refuses when far", () => {
-    const out = { ...stepNet(createNet(), FRAME, { pressed: true }, { ...still, x: 0, z: 0 }).net, time: NET.fillEvery * 2 };
-    expect(stepNet(out, FRAME, { pressed: true }, { ...still, x: NET.reach + 5, z: 0 }).event).toBe("far");
-    const hauled = stepNet(out, FRAME, { pressed: true }, { ...still, x: 3, z: 0 });
-    expect(hauled.event).toBe("hauled");
-    expect(hauled.count).toBe(2);
-    expect(hauled.net.phase).toBe("stowed");
-  });
-});
-
 describe("hold", () => {
   test("a net can be bought once and only with enough coins", () => {
     const poor = { ...createHold(), coins: NET.price - 1 };
@@ -392,11 +332,6 @@ describe("species table", () => {
     expect(large.fight.strength).toBeGreaterThan(small.fight.strength);
   });
 
-  test("stock in a square is the sum over its depths", () => {
-    const lake = { cells: [[{ rarity: Rarity.Common, stock: 2 }, { rarity: Rarity.Rare, stock: 1 }, { rarity: Rarity.None, stock: 0 }]] };
-    expect(stockAt(lake, 0)).toBe(3);
-    expect(stockAt(lake, -1)).toBe(0);
-  });
 });
 
 describe("sunken chest", () => {

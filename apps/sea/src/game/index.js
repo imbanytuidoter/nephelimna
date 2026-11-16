@@ -7,7 +7,7 @@ import { createBump } from "./bump.js";
 import { createBoatFlag } from "./boatFlag.js";
 import { createPropeller } from "./propeller.js";
 import { cellLabel, createChart, compassLabel } from "./chart.js";
-import { createRound } from "./round/index.js";
+import { createSea } from "./sea/index.js";
 import { createHelp } from "./help.js";
 import { NET } from "./fishing/net.js";
 import { createChaseCamera } from "./chaseCamera.js";
@@ -65,8 +65,8 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   const flag = createBoatFlag({ boat: body.object, patchMaterial, centerX });
   const propeller = createPropeller({ boat: body.object, patchMaterial, centerX });
   const market = createMarket({ scene, site, patchMaterial, baseUrl, onChanged: onStaticChanged, onSold: () => audio.play("coins", 0.8), onFlag: (id) => flag.set(id) });
-  const round = createRound({ baseUrl, site, cellName: cellLabel, onShowLake: () => chart.show() });
-  const fishing = createFishing({ scene, body, patchMaterial, market, schools: life.fish.schools, baseUrl, floaters, audio, round });
+  const sea = createSea({ baseUrl, cellName: cellLabel, nameOf: () => presence.name });
+  const fishing = createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea });
   createProgress({ baseUrl });
   createHoldPanel({ market, baseUrl, audio });
   const restored = loadSession(Date.now(), fishing.gearSizes);
@@ -77,7 +77,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   let saveIn = 0;
   const snapshot = () => {
     fwd.set(1, 0, 0).applyQuaternion(body.quat);
-    return { x: body.pos.x, z: body.pos.z, heading: Math.atan2(-fwd.z, fwd.x), depth: fishing.state.depth, bait: fishing.state.bait, net: fishing.state.net };
+    return { x: body.pos.x, z: body.pos.z, heading: Math.atan2(-fwd.z, fwd.x), depth: fishing.state.depth, bait: fishing.state.bait };
   };
   const persist = () => saveSession(snapshot(), Date.now());
   addEventListener("pagehide", persist);
@@ -85,8 +85,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
     if (document.hidden) persist();
   });
   const tradePrompt = document.getElementById("trade-prompt");
-  const joinButton = document.getElementById("round-join");
-  const help = createHelp({ touch, netPrice: NET.price, onDepth: () => fishing.cycleDepth(), onJoin: () => joinButton.click() });
+  const help = createHelp({ touch, netPrice: NET.price, onDepth: () => fishing.cycleDepth() });
   createVolume({ audio });
   let gullIn = 6;
   let creakIn = 9;
@@ -164,7 +163,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   return {
     body,
     helm,
-    round,
+    sea,
     site,
     look: input.state,
     life,
@@ -216,7 +215,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
       camera.updateMatrixWorld();
       fwd.set(1, 0, 0).applyQuaternion(body.quat);
       hud.update(body.vel.dot(fwd), helm.throttle);
-      help.update({ deck: pov.active, nearMarket: !tradePrompt.hidden, hasNet: market.hold.hasNet, canJoin: !joinButton.hidden, inRound: round.fishing() });
+      help.update({ deck: pov.active, nearMarket: !tradePrompt.hidden, hasNet: market.hold.hasNet });
       const bearing = Math.atan2(fwd.x, -fwd.z);
       const label = compassLabel((bearing * 180) / Math.PI);
       if (label !== headingText) headingEl.textContent = headingText = label;
@@ -226,13 +225,13 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
         persist();
       }
       chart.setBoats(presence.boats());
-      chart.setOverlay(round.overlay());
+      chart.setOverlay(sea.overlay());
       chart.update(body.pos, bearing, performance.now());
       life.update(dt, time, body.pos, Math.atan2(fwd.z, fwd.x), body.vel.dot(fwd));
       market.update(body.pos, body.vel.dot(fwd));
       fishing.update(dt, time, pov);
       flag.update(time, body.vel.dot(fwd));
-      round.update(body.pos);
+      sea.update();
       propeller.update(dt, helm.throttle, !pov.active);
       bump(dt, push.takeImpact());
       const knots = Math.abs(body.vel.dot(fwd));

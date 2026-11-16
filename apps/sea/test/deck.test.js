@@ -114,12 +114,12 @@ describe("propeller", () => {
 });
 
 describe("controls window", () => {
-  const base = { deck: false, touch: false, nearMarket: false, hasNet: false, canJoin: false, inRound: false, netPrice: 120 };
+  const base = { deck: false, touch: false, nearMarket: false, hasNet: false, netPrice: 120 };
   const keysOf = (rows) => rows.map((row) => row.keys.join(""));
 
   test("at the helm it lists driving keys and offers the market and the round only when they are in reach", () => {
     expect(keysOf(helpRows(base))).toEqual(["WS", "AD", "G", "M", "I"]);
-    expect(keysOf(helpRows({ ...base, nearMarket: true, canJoin: true }))).toEqual(["WS", "AD", "G", "M", "I", "E", "Join"]);
+    expect(keysOf(helpRows({ ...base, nearMarket: true }))).toEqual(["WS", "AD", "G", "M", "I", "E"]);
   });
 
   test("on deck the net row says how to get a net until one is owned, then becomes a button", () => {
@@ -128,7 +128,7 @@ describe("controls window", () => {
     expect(locked.text).toContain("120 coins");
     const owned = helpRows({ ...base, deck: true, hasNet: true }).find((row) => row.keys[0] === "N");
     expect(owned.press).toBe("KeyN");
-    expect(helpRows({ ...base, deck: true, hasNet: true, inRound: true }).find((row) => row.keys[0] === "N").text).toContain("hidden net");
+    expect(helpRows({ ...base, deck: true, hasNet: true }).find((row) => row.keys[0] === "N").text).toContain("hidden net");
   });
 
   test("on a phone it names thumbs instead of keys", () => {

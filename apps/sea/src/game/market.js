@@ -145,7 +145,8 @@ export function createMarket({ scene, site, patchMaterial, baseUrl, onChanged, o
     sell.textContent = `Sell everything for ${value}`;
   };
   const renderGear = () => {
-    el("market-net-note").textContent = hold.hasNet ? "Set it from the port side. Fills with up to 12 fish while you fish." : `Set it from the port side. Fills with up to 12 fish while you fish. ${NET.price} coins.`;
+    const note = "Press N in a chart square to set a hidden net for an hour. A rival's small fish caught there is yours, worth three fish. Nobody sees where it is.";
+    el("market-net-note").textContent = hold.hasNet ? note : `${note} ${NET.price} coins.`;
     buy.hidden = hold.hasNet;
     el("market-net-owned").hidden = !hold.hasNet;
     buy.textContent = `Buy ${NET.price}`;

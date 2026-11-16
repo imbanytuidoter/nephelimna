@@ -1,4 +1,3 @@
-import { NET } from "./fishing/net.js";
 import { pictureSlug } from "./fishing/species.js";
 import { applyLoot, rollLoot } from "./fishing/loot.js";
 import { holdValue, openChest } from "./hold.js";
@@ -78,7 +77,7 @@ export function createHoldPanel({ market, baseUrl, audio, random = Math.random }
     el("hold-chests").replaceChildren(...padded(Array.from({ length: hold.chests }, () => chestCell(baseUrl))));
     openChestButton.hidden = hold.chests === 0 || !reveal.hidden;
     const gear = [];
-    if (hold.hasNet) gear.push(tagCell("Net", `Fishing net, fills with up to ${NET.capacity} fish`));
+    if (hold.hasNet) gear.push(tagCell("Net", "Hidden net: press N in a chart square"));
     if (hold.twin > 0) gear.push(tagCell(`Twin ×${hold.twin}`, `Twin hook: your next ${hold.twin} fish count double`));
     el("hold-gear").replaceChildren(...padded(gear));
   };

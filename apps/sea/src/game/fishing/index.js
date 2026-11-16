@@ -1,26 +1,22 @@
 import * as THREE from "three";
-import { Bait, Depth, POINTS_LEVIATHAN, Rarity, rarityFromPoints } from "@nephelimna/rules";
+import { Bait, Depth, POINTS_LEVIATHAN, rarityFromPoints } from "@nephelimna/rules";
 import { islandHeight } from "../../ocean/scene/islandHeight.js";
-import { addCatch, landFish, stowChest } from "../hold.js";
+import { landFish, stowChest } from "../hold.js";
 import { seeded } from "../life/random.js";
-import { schoolCenter } from "../life/schoolMotion.js";
 import { createCatchCard } from "./card.js";
 import { FIGHT_RULES } from "./fight.js";
 import { createGear } from "./gear.js";
-import { cellIndexAt, createLake, haulNetArea, stockAt, tryCast } from "./lake.js";
+import { cellIndexAt } from "./lake.js";
 import { LOOT } from "./loot.js";
-import { NET, createNet, netDistance, netFish, stepNet } from "./net.js";
+import { NET } from "./net.js";
 import { ROD, castDistance, createRod, flightTime, stepRod } from "./rod.js";
 import { CHEST, LEVIATHAN, rollFish } from "./species.js";
 
-const TIDE_SECONDS = 480;
-const SHOAL_REACH = 7;
 const LAND_LEVEL = -0.4;
 const REST_ELEVATION = 0.5;
 const BACK_SWING = 0.8;
 const WHIP_TIME = 0.2;
 const ROD_FOLLOW = 0.3;
-const RISE = { reach: 4.5, life: 8, near: 6, far: 20, pace: 10, amp: 0.045, size: 0.45 };
 const DEPTHS = [
   { value: Depth.Surface, label: "Surface" },
   { value: Depth.Middle, label: "Middle" },
@@ -51,10 +47,8 @@ const NOTES = {
   snapped: "The line snapped. Let go when it runs.",
   threw: "It threw the hook. Keep the line tight.",
   "no-net": `You need a net. The fish market sells one for ${NET.price} coins.`,
-  set: `Net is out. It draws fish from this square and the ones around it, one every ${NET.fillEvery} seconds, up to ${NET.capacity}. Come back within ${NET.reach} m and press N to haul it in.`,
-  far: `Too far from the net. Get within ${NET.reach} m.`,
-  "no-casts": "No casts left this tide. Wait for the tide to turn.",
-  "off-chart": "That is outside the round's waters.",
+  "off-chart": "Fish inside the chart squares. Every cast there is sealed on Zama.",
+  "sea-closed": "The sealed sea is out of reach right now. Try again in a moment.",
   "chain-failed": "The cast did not reach the chain. Try again.",
   snagged: "A hidden net took that fish. A rival scores it.",
 };
@@ -73,37 +67,29 @@ const lift = new THREE.Vector3();
 const lean = new THREE.Vector3();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const DOWN = new THREE.Vector3(0, -1, 0);
-const spot = { x: 0, z: 0 };
 const smooth = THREE.MathUtils.smoothstep;
 
-export function createFishing({ scene, body, patchMaterial, market, schools, baseUrl, floaters, audio, round }) {
+export function createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea }) {
   const random = seeded(Date.now() % 100000);
   const gear = createGear({ scene, patchMaterial, baseUrl });
   const card = createCatchCard(baseUrl);
-  let lake = createLake(random);
-  let tide = 0;
   let rod = createRod();
-  let net = createNet();
   let depth = 0;
   let bait = 0;
   let pressed = false;
   let held = false;
   let netPressed = false;
-  let roundNetPlaced = false;
-  let netCell = -1;
-  let netRestored = false;
+  let netPlaced = false;
   let landing = null;
   let ticket = null;
   let floatLevel = 0;
   let fire = false;
   let active = false;
   let clock = 0;
-  let riseIn = 2;
   let crank = 0;
   let nibble = 0;
   let landedAt = 0;
   let noteUntil = 0;
-  const rises = [];
   const probe = new THREE.Vector3();
   const castFrom = new THREE.Vector3();
   const castDir = new THREE.Vector3(1, 0, 0);
@@ -213,25 +199,10 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
     castPoint(distance, target);
     if (islandHeight(target.x, target.z) > LAND_LEVEL) return { blocked: true };
     const index = cellIndexAt(target.x, target.z);
-    if (round?.fishing()) {
-      if (index < 0) return { blocked: true, event: "off-chart" };
-      if (round.castsLeft() <= 0) return { blocked: true, event: "no-casts" };
-      ticket = round.cast(index, DEPTHS[depth].value, BAITS[bait].value);
-      return { pending: true };
-    }
-    const outcome = tryCast(lake, index, DEPTHS[depth].value, BAITS[bait].value);
-    if (outcome.caught) {
-      const atRise = rises.some((rise) => clock - rise.t < RISE.life && Math.hypot(rise.x - target.x, rise.z - target.z) < RISE.reach);
-      return { caught: true, shoal: atRise, species: { ...rollFish(outcome.rarity, random) }, commit: outcome.commit };
-    }
-    for (const school of schools) {
-      schoolCenter(school, clock, spot);
-      if (Math.hypot(spot.x - target.x, spot.z - target.z) < SHOAL_REACH) {
-        return { caught: true, shoal: true, species: { ...rollFish(Rarity.Common, random) }, commit: () => lake };
-      }
-    }
-    if (random() < LOOT.chance) return { caught: true, species: CHEST, commit: () => lake };
-    return { caught: false };
+    if (!sea.fishing()) return { blocked: true, event: "sea-closed" };
+    if (index < 0) return { blocked: true, event: "off-chart" };
+    ticket = sea.cast(index, DEPTHS[depth].value, BAITS[bait].value);
+    return { pending: true };
   };
 
   const verdict = () => {
@@ -243,13 +214,12 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
     if (leviathanNear) card.showNote("Sonar", "Something huge is moving in a square next to this one.");
     else if (rareNear) card.showNote("Sonar", "A rare fish is in a square next to this one.");
     if (snagged) return { caught: false, event: "snagged" };
-    if (points === 0) return { caught: false, event: "empty" };
+    if (points === 0) return random() < LOOT.chance ? { caught: true, shoal: false, species: CHEST } : { caught: false, event: "empty" };
     const species = points >= POINTS_LEVIATHAN ? { ...LEVIATHAN } : { ...rollFish(rarityFromPoints(points), random) };
-    return { caught: true, shoal: false, species: { ...species, points }, commit: () => lake };
+    return { caught: true, shoal: false, species: { ...species, points } };
   };
 
   const land = (caught) => {
-    lake = caught.commit();
     if (caught.species.rarity === "chest") {
       market.setHold(stowChest(market.hold));
       card.showChest("Stowed in your hold. Open it from the hold button, or press I.");
@@ -332,16 +302,12 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
       depth = saved.depth;
       bait = saved.bait;
       chips();
-      if (!saved.net) return;
-      net = saved.net;
-      netCell = cellIndexAt(saved.net.x, saved.net.z);
-      netRestored = true;
     },
     setResolution(width, height) {
       gear.setResolution(width, height);
     },
     get state() {
-      return { rod, net, depth, bait, tide, active };
+      return { rod, depth, bait, active };
     },
     update(dt, time, pov) {
       clock = time;
@@ -352,10 +318,7 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
         active = pov.active;
         panel.hidden = !active;
         gear.showRod(active);
-        const stock = active && !round?.fishing() ? stockAt(lake, cellIndexAt(body.pos.x, body.pos.z)) : 0;
-        if (active && round?.fishing()) note("Round waters. Nobody can see what is under a square, not even the server.", 5);
-        else if (active) note(stock >= 4 ? "Plenty of fish are rising here." : stock > 0 ? "A few fish are rising here." : "The water is quiet here. Try another spot.", 5);
-        riseIn = 1.5;
+        if (active) note(cellIndexAt(body.pos.x, body.pos.z) < 0 ? NOTES["off-chart"] : "Sealed waters. Nobody can see what is under a square, not even the server.", 5);
       }
       aim.copy(pov.aim);
       right.set(-aim.z, 0, aim.x);
@@ -365,73 +328,26 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
       if (!pov.fire && fire) release();
       fire = pov.fire;
 
-      if (active) {
-        riseIn -= dt;
-        if (riseIn <= 0) {
-          const here = cellIndexAt(body.pos.x, body.pos.z);
-          const stock = round?.fishing() ? 0 : stockAt(lake, here);
-          riseIn = stock > 0 ? (RISE.pace / stock) * (0.6 + random() * 0.8) : 3;
-          if (stock > 0) {
-            const angle = random() * Math.PI * 2;
-            const reach = RISE.near + random() * (RISE.far - RISE.near);
-            const rise = { x: body.pos.x + Math.cos(angle) * reach, z: body.pos.z + Math.sin(angle) * reach, t: time };
-            if (islandHeight(rise.x, rise.z) < LAND_LEVEL && cellIndexAt(rise.x, rise.z) === here) {
-              rises.push(rise);
-              if (rises.length > 6) rises.shift();
-              ripple(rise.x, rise.z, RISE.amp, RISE.size);
-            }
-          }
-        }
-      }
-
-      if (Math.floor(time / TIDE_SECONDS) !== tide) {
-        tide = Math.floor(time / TIDE_SECONDS);
-        lake = createLake(random);
-        card.showNote("The tide turns", "Fish are back in every square.");
-      }
-
       const before = rod;
       const step = stepRod(rod, dt, { held, pressed }, { canFish, random, resolve, verdict });
       rod = step.rod;
       for (const event of step.events) onEvent(event === "splash" && before.phase === "fight" ? "splash-in" : event, before);
       pressed = false;
 
-      const roundNote = round?.takeNote();
-      if (roundNote) note(roundNote, 6);
-      if (netPressed && round?.fishing()) {
+      const seaNote = sea.takeNote();
+      if (seaNote) note(seaNote, 6);
+      if (netPressed) {
         netPressed = false;
         if (!market.hold.hasNet) onEvent("no-net", rod);
         else if (!canFish) onEvent("moving", rod);
-        else if (round.setNet(cellIndexAt(body.pos.x, body.pos.z))) {
+        else if (!sea.fishing()) onEvent("sea-closed", rod);
+        else if (cellIndexAt(body.pos.x, body.pos.z) < 0) onEvent("off-chart", rod);
+        else if (sea.setNet(cellIndexAt(body.pos.x, body.pos.z))) {
           gear.placeNet(body.pos, side.clone().negate().setY(0).normalize(), fwd, floatLevel);
           audio.play("splash_medium", 0.6);
-          roundNetPlaced = true;
+          netPlaced = true;
         }
       }
-      if (netRestored) {
-        netRestored = false;
-        gear.placeNet(new THREE.Vector3(net.x, body.pos.y, net.z), side.clone().negate().setY(0).normalize(), fwd, floatLevel);
-      }
-      const netStep = stepNet(net, dt, { pressed: netPressed }, { owned: market.hold.hasNet, canFish, x: body.pos.x, z: body.pos.z });
-      if (netStep.event === "set") {
-        netCell = cellIndexAt(body.pos.x, body.pos.z);
-        gear.placeNet(body.pos, side.clone().negate().setY(0).normalize(), fwd, floatLevel);
-        audio.play("splash_medium", 0.6);
-      }
-      if (netStep.event === "hauled") {
-        const haul = haulNetArea(lake, netCell, netStep.count);
-        lake = haul.lake;
-        let next = market.hold;
-        for (const fish of haul.catches) next = addCatch(next, rollFish(fish.rarity, random));
-        market.setHold(next);
-        if (haul.catches.length) {
-          card.showNote(`${haul.catches.length} fish in the net`, "Common and uncommon only");
-          audio.play("catch", 0.7);
-        } else note(netStep.count ? "The net came up empty. No small fish left in this square." : "Net hauled before anything swam in. Leave it longer.");
-      }
-      if (netStep.event) onEvent(netStep.event, before);
-      net = netStep.net;
-      netPressed = false;
 
       const fight = rod.fight;
       const fighting = rod.phase === "fight";
@@ -544,8 +460,8 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
         gear.setTrophy(landing.kind, lift, landing.size, time * 5);
         if (landing.time > 1.8) landing = null;
       } else gear.setTrophy(null);
-      if (!round?.netsOut()) roundNetPlaced = false;
-      gear.setNet(net.phase === "out" || roundNetPlaced, time, floatLevel);
+      if (!sea.netsOut()) netPlaced = false;
+      gear.setNet(netPlaced, time, floatLevel);
 
       const reeling = fighting && held && !fight.slipping;
       audio.loop("reel", reeling || rod.phase === "retrieving" ? 0.55 : 0, reeling ? 0.8 + 0.4 * (1 - Math.min(1, tension)) : 1.2);
@@ -566,24 +482,12 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";
       if (bonus.textContent !== twinText) bonus.textContent = twinText;
-      const inRound = round?.fishing();
-      const away = net.phase === "out" ? netDistance(net, body.pos.x, body.pos.z) : 0;
-      const ready = net.phase === "out" && away <= NET.reach && netFish(net) > 0;
-      const netState = !market.hold.hasNet
-        ? ["Buy a net", `${NET.price} coins at the market`]
-        : net.phase === "out"
-          ? away <= NET.reach
-            ? ["Haul in net", `${netFish(net)} of ${NET.capacity} fish inside`]
-            : [`Net ${Math.round(away)} m away`, `Sail within ${NET.reach} m to haul`]
-          : inRound
-            ? [round.netsOut() ? "Hidden net set" : "Set hidden net", "Steals rivals' fish"]
-            : ["Set net here", "Fills while you fish"];
-      const netKey = netState.join("|") + ready;
+      const netState = !market.hold.hasNet ? ["Buy a net", `${NET.price} coins at the market`] : [sea.netsOut() ? "Hidden net set" : "Set hidden net", "Steals rivals' fish for an hour"];
+      const netKey = netState.join("|");
       if (netButton.dataset.key !== netKey) {
         netButton.dataset.key = netKey;
         netTitle.textContent = netState[0];
         netDetail.textContent = netState[1];
-        netButton.classList.toggle("ready", ready);
       }
     },
   };

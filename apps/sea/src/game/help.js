@@ -1,7 +1,7 @@
 const STORE = "nephelimna.help.v1";
 const NARROW = 560;
 
-export function helpRows({ deck, touch, nearMarket, hasNet, canJoin, inRound, netPrice }) {
+export function helpRows({ deck, touch, nearMarket, hasNet, netPrice }) {
   const rows = [];
   const add = (keys, text, press = null) => rows.push({ keys, text, press });
   if (!deck) {
@@ -10,11 +10,10 @@ export function helpRows({ deck, touch, nearMarket, hasNet, canJoin, inRound, ne
       add(["W", "S"], "Throttle ahead and astern");
       add(["A", "D"], "Steer");
     }
-    add(["G"], "Drop anchor and fish. Works at any speed", "KeyG");
+    add(["G"], "Drop anchor and fish inside the chart squares", "KeyG");
     add(["M"], "Open the chart", "KeyM");
     add(["I"], "Your hold: catch, chests, gear", "KeyI");
     if (nearMarket) add(["E"], "Trade at the fish market", "KeyE");
-    if (canJoin) add(["Join"], "Join the round on Sepolia", "join");
     return rows;
   }
   if (touch) {
@@ -28,14 +27,14 @@ export function helpRows({ deck, touch, nearMarket, hasNet, canJoin, inRound, ne
   }
   add(["1", "2", "3"], "Depth of the hook. Each fish lives at one depth", "depth");
   add(["B"], "Bait: worm for common fish, spoon for better ones, live fish for mythic", "KeyB");
-  add(["N"], hasNet ? (inRound ? "Mark a hidden net in this square" : "Set the net, it fills in 15 seconds") : `Net: buy it at the fish market for ${netPrice} coins`, hasNet ? "KeyN" : null);
+  add(["N"], hasNet ? "Set a hidden net in this square for an hour" : `Net: buy it at the fish market for ${netPrice} coins`, hasNet ? "KeyN" : null);
   add(["I"], "Your hold: catch, chests, gear", "KeyI");
   add(["G"], "Weigh anchor, back to the helm", "KeyG");
   add(["M"], "Open the chart", "KeyM");
   return rows;
 }
 
-export function createHelp({ touch, netPrice, onDepth, onJoin }) {
+export function createHelp({ touch, netPrice, onDepth }) {
   const panel = document.getElementById("help");
   const list = document.getElementById("help-list");
   const toggle = document.getElementById("help-toggle");
@@ -71,7 +70,6 @@ export function createHelp({ touch, netPrice, onDepth, onJoin }) {
 
   const act = (press) => {
     if (press === "depth") return onDepth();
-    if (press === "join") return onJoin();
     dispatchEvent(new KeyboardEvent("keydown", { code: press }));
   };
 
