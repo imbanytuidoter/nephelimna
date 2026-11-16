@@ -1,0 +1,41 @@
+{
+  "name": "@nephelimna/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "pretest": "pnpm --filter @nephelimna/rules build",
+    "test": "hardhat test",
+    "pretypecheck": "pnpm --filter @nephelimna/rules build && hardhat build",
+    "typecheck": "tsc --noEmit",
+    "deploy:sepolia": "hardhat run deploy/deploy.ts --network sepolia"
+  },
+  "dependencies": {
+    "@fhevm/solidity": "0.13.4"
+  },
+  "devDependencies": {
+    "@fhevm/hardhat-plugin-v3": "0.13.1",
+    "@fhevm/sdk": "0.13.8",
+    "@nephelimna/rules": "workspace:*",
+    "@nomicfoundation/hardhat-ethers": "^4.0.0",
+    "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.0",
+    "@nomicfoundation/hardhat-ignition": "^3.0.0",
+    "@nomicfoundation/hardhat-ignition-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-keystore": "^3.0.0",
+    "@nomicfoundation/hardhat-mocha": "^4.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.0",
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^4.0.0",
+    "@nomicfoundation/hardhat-typechain": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^3.0.0",
+    "@nomicfoundation/ignition-core": "^3.0.0",
+    "@types/chai": "^5.2.0",
+    "@types/mocha": "^10.0.10",
+    "@zama-fhe/sdk": "3.7.2",
+    "chai": "^6.0.0",
+    "ethers": "^6.15.0",
+    "hardhat": "3.21.2",
+    "mocha": "^12.0.0",
+    "viem": "^2.57.17"
+  }
+}

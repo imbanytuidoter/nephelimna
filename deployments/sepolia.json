@@ -1,0 +1,8 @@
+{
+  "chainId": 11155111,
+  "NepheTable": "0xB3757D000DBB7D6423352C7106FDb9950DAD7dCC",
+  "keeper": "0xB374edc38766385239587eed969db18101D1817E",
+  "deployedAt": "2026-11-15",
+  "deployTx": "0x7d3760136098b3d23142c162c40099dc70215cc49c68fbb8f6d5eced079f3848",
+  "gasUsed": "24878667"
+}
