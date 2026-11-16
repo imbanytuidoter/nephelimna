@@ -103,6 +103,8 @@ Table service. It needs `SEPOLIA_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `TABLE_ADDRES
 cd services/bots && node --import tsx src/table/main.ts
 ```
 
+On a server, `infra/systemd/nephelimna-table.service` runs it as user `nephelimna` from `/srv/nephelimna` with Node 22.23.4 or newer on the path and the env files in `/etc/nephelimna`. Put a different user, checkout or Node path in a drop-in, `/etc/systemd/system/nephelimna-table.service.d/host.conf`; clear `EnvironmentFile=` and `ExecStart=` there before setting new values.
+
 A full scripted round on Sepolia with gas and latency rows:
 
 ```bash

@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Sequential save code used as a test fixture"
+regexes = ['''0123456789abcdef0123456789abcdef''']

@@ -4,11 +4,11 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=claude
-WorkingDirectory=/root/nephelimna/services/bots
-EnvironmentFile=/home/claude/.config/nephelimna/sepolia.env
-EnvironmentFile=/home/claude/.config/nephelimna/table.env
-ExecStart=/home/claude/.local/node/node-v22.23.4-linux-x64/bin/node --import tsx src/table/main.ts
+User=nephelimna
+WorkingDirectory=/srv/nephelimna/services/bots
+EnvironmentFile=/etc/nephelimna/sepolia.env
+EnvironmentFile=/etc/nephelimna/table.env
+ExecStart=/usr/bin/env node --import tsx src/table/main.ts
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
