@@ -83,6 +83,17 @@ export function rpcAllowed(body: unknown): boolean {
   return calls.every((call) => typeof call === "object" && call !== null && RPC_METHODS.has((call as { method?: unknown }).method as string));
 }
 
+/** Wallet libraries cache "method not found" (-32601) and stop retrying, but treat an HTTP error as a transient failure and try again before every transaction. */
+export function rpcRefusal(body: unknown): unknown {
+  const calls = Array.isArray(body) ? body : [body];
+  if (calls.length === 0 || calls.length > 20 || !calls.every((call) => typeof call === "object" && call !== null)) return null;
+  const answers = calls.map((call) => {
+    const { id = null, method } = call as { id?: unknown; method?: unknown };
+    return { jsonrpc: "2.0", id, error: { code: -32601, message: `the method ${String(method)} does not exist/is not available` } };
+  });
+  return Array.isArray(body) ? answers : answers[0];
+}
+
 export function createHttp(routes: Routes) {
   const dripByIp = createLimiter(DRIPS_PER_IP, WINDOW_MS);
   const dripByAddress = createLimiter(1, WINDOW_MS);
@@ -136,7 +147,8 @@ export function createHttp(routes: Routes) {
           const body = await readBody(request);
           if (!rpcAllowed(body)) {
             routes.log({ event: "rpc-refused", methods: (Array.isArray(body) ? body : [body]).map((call) => String((call as { method?: unknown })?.method)).slice(0, 5) });
-            return reply(response, 400, { error: "method not allowed" });
+            const refusal = rpcRefusal(body);
+            return refusal ? reply(response, 200, refusal) : reply(response, 400, { error: "method not allowed" });
           }
           const upstream = await fetch(routes.rpcUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(RPC_TIMEOUT_MS) });
           response.writeHead(upstream.status, { "content-type": "application/json", "cache-control": "no-store" });

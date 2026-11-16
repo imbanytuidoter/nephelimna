@@ -4,17 +4,16 @@ import { privateKeyToAccount } from "viem/accounts";
 import { createChain } from "./chain.js";
 import { readConfig } from "./config.js";
 import { createHttp } from "./http.js";
-import { createKeeper } from "./keeper.js";
+import { createSeaKeeper } from "./sea.js";
 
 const TICK_MS = 2500;
-const BOT_TICK_MS = 1000;
 const ERROR_PAUSE_MS = 6000;
 
 const log = (entry: Record<string, unknown>) => process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), ...entry })}\n`);
 const config = readConfig(process.env);
 const keeperAccount = privateKeyToAccount(config.keeperKey);
 const chain = createChain(config.rpcUrl, config.table, keeperAccount);
-const keeper = createKeeper(config, chain, log);
+const keeper = createSeaKeeper(config, chain, log);
 let stopping = false;
 
 async function loop(name: string, run: () => Promise<void>, everyMs: number) {
@@ -38,9 +37,8 @@ async function drip(address: Hex) {
 }
 
 const server = createHttp({ state: keeper.snapshot, drip, rpcUrl: config.rpcUrl, dailyDrips: config.dailyDrips, savesFile: join(dirname(config.stateFile), "saves.json"), log });
-server.listen(config.port, "127.0.0.1", () => log({ event: "listening", port: config.port, table: config.table, keeper: keeperAccount.address }));
+server.listen(config.port, "127.0.0.1", () => log({ event: "listening", port: config.port, sea: config.table, keeper: keeperAccount.address }));
 void loop("keeper", keeper.tick, TICK_MS);
-void loop("bots", keeper.botTick, BOT_TICK_MS);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {

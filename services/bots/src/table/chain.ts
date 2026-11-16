@@ -1,4 +1,4 @@
-import { TABLE_ABI } from "@nephelimna/rules";
+import { SEA_ABI } from "@nephelimna/rules";
 import { MemoryStorage, ZamaSDK } from "@zama-fhe/sdk";
 import { sepolia as zamaSepolia } from "@zama-fhe/sdk/chains";
 import { node } from "@zama-fhe/sdk/node";
@@ -6,7 +6,7 @@ import { createConfig } from "@zama-fhe/sdk/viem";
 import { type Hex, type PrivateKeyAccount, type PublicClient, type TransactionReceipt, createPublicClient, createWalletClient, encodeFunctionData, http, parseAbi } from "viem";
 import { sepolia } from "viem/chains";
 
-export const abi = parseAbi(TABLE_ABI);
+export const abi = parseAbi(SEA_ABI);
 const RECEIPT_TIMEOUT_MS = 120_000;
 const GAS_PRICE_FLOOR = 5_000_000n;
 const GAS_PRICE_HEADROOM = 3n;
