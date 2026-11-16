@@ -41,21 +41,17 @@ describe("cellFromRandom", () => {
 describe("resolveCast", () => {
   const cell: Cell = [{ rarity: Rarity.Common, stock: 2 }, { rarity: Rarity.Rare, stock: 1 }, { rarity: Rarity.Mythic, stock: 1 }];
 
-  it("catches with matching bait and takes one fish from that layer only", () => {
-    const res = resolveCast(cell, Depth.Middle, Bait.Spoon);
-    expect(res).toMatchObject({ caught: true, rarity: Rarity.Rare, points: 8 });
-    expect(res.cell).toEqual([cell[0], { rarity: Rarity.Rare, stock: 0 }, cell[2]]);
+  it("catches with matching bait and scores that layer's rarity", () => {
+    expect(resolveCast(cell, Depth.Middle, Bait.Spoon)).toEqual({ caught: true, rarity: Rarity.Rare, points: 8 });
   });
 
-  it("leaves the lake alone on a wrong bait", () => {
-    const res = resolveCast(cell, Depth.Middle, Bait.Worm);
-    expect(res).toMatchObject({ caught: false, rarity: Rarity.None, points: 0 });
-    expect(res.cell).toBe(cell);
+  it("catches nothing on a wrong bait", () => {
+    expect(resolveCast(cell, Depth.Middle, Bait.Worm)).toEqual({ caught: false, rarity: Rarity.None, points: 0 });
   });
 
-  it("finds nothing once the layer is empty", () => {
-    const once = resolveCast(cell, Depth.Bottom, Bait.LiveFish);
-    expect(resolveCast(once.cell, Depth.Bottom, Bait.LiveFish).caught).toBe(false);
+  it("finds nothing in an empty layer", () => {
+    const empty: Cell = [cell[0], cell[1], { rarity: Rarity.Mythic, stock: 0 }];
+    expect(resolveCast(empty, Depth.Bottom, Bait.LiveFish).caught).toBe(false);
   });
 });
 
