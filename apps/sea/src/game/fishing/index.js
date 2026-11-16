@@ -113,8 +113,13 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
   const action = el("fish-action");
   const netButton = el("fish-net");
   const bonus = el("fish-bonus");
-  const depthChip = el("fish-depth");
-  const baitChip = el("fish-bait");
+  const depthGroup = el("fish-depth");
+  const baitGroup = el("fish-bait");
+  const baitHint = el("fish-bait-hint");
+  const actionLabel = el("fish-action-label");
+  const actionDetail = el("fish-action-detail");
+  const netTitle = netButton.querySelector(".net-title");
+  const netDetail = netButton.querySelector(".net-detail");
   const message = el("fish-message");
   panel.hidden = true;
 
@@ -122,31 +127,28 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
     message.textContent = text;
     noteUntil = clock + seconds;
   };
-  const fill = (button, caption, value, detail, level = -1) => {
-    const small = document.createElement("small");
-    small.textContent = caption;
-    const strong = document.createElement("b");
-    strong.textContent = value;
-    button.replaceChildren(small, strong);
-    if (detail) {
-      const line = document.createElement("em");
-      line.textContent = detail;
-      button.append(line);
-    }
-    if (level >= 0) {
-      const pips = document.createElement("span");
-      pips.className = "pips";
-      for (let i = 0; i < DEPTHS.length; i++) {
-        const pip = document.createElement("i");
-        pip.className = i === level ? "on" : "";
-        pips.append(pip);
-      }
-      button.append(pips);
-    }
-  };
+  const segment = (group, options, pick) =>
+    options.map((option, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("role", "radio");
+      button.textContent = option.label;
+      button.addEventListener("click", () => pick(index));
+      group.append(button);
+      return button;
+    });
+  let depthButtons = [];
+  let baitButtons = [];
   const chips = () => {
-    fill(depthChip, "Depth", DEPTHS[depth].label, "", depth);
-    fill(baitChip, "Bait", BAITS[bait].label, BAITS[bait].hint);
+    depthButtons.forEach((button, index) => button.setAttribute("aria-checked", String(index === depth)));
+    baitButtons.forEach((button, index) => button.setAttribute("aria-checked", String(index === bait)));
+    baitHint.textContent = `Catches ${BAITS[bait].hint}`;
+  };
+  let locked = null;
+  const lockTackle = (value) => {
+    if (locked === value) return;
+    locked = value;
+    for (const button of [...depthButtons, ...baitButtons]) button.disabled = value;
   };
   const cycleDepth = (to) => {
     if (rod.phase !== "idle") return;
@@ -154,12 +156,14 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
     chips();
     audio.play("click", 0.5);
   };
-  const cycleBait = () => {
+  const cycleBait = (to) => {
     if (rod.phase !== "idle") return;
-    bait = (bait + 1) % BAITS.length;
+    bait = to ?? (bait + 1) % BAITS.length;
     chips();
     audio.play("click", 0.5);
   };
+  depthButtons = segment(depthGroup, DEPTHS, (index) => cycleDepth(index));
+  baitButtons = segment(baitGroup, BAITS, (index) => cycleBait(index));
   chips();
 
   const down = () => {
@@ -177,8 +181,6 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
   action.addEventListener("pointerup", release);
   action.addEventListener("pointercancel", release);
   netButton.addEventListener("click", () => (netPressed = true));
-  depthChip.addEventListener("click", () => cycleDepth());
-  baitChip.addEventListener("click", cycleBait);
   addEventListener("keydown", (e) => {
     if (e.repeat) return;
     if (e.code === "KeyF" || e.code === "Space") {
@@ -551,14 +553,16 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
 
       const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : (PROMPT[rod.phase] ?? "");
       const prompt = fighting && ["run", "coil", "jump"].includes(fight.mode) ? "Let it run" : label;
-      if (action.textContent !== prompt) action.textContent = prompt;
+      if (actionLabel.textContent !== prompt) actionLabel.textContent = prompt;
+      lockTackle(rod.phase !== "idle");
       action.classList.toggle("alert", rod.phase === "take");
       action.classList.toggle("ease", fighting && ["run", "coil", "jump"].includes(fight.mode));
       const gauge = fighting ? Math.min(1, strain) : rod.phase === "charging" ? rod.charge : rod.phase === "fight" ? 0 : 0;
       action.style.setProperty("--gauge", gauge.toFixed(3));
       action.style.setProperty("--gauge-colour", fighting ? (strain > 0.92 ? "#ff4a3a" : strain > 0.6 ? "#f0b04a" : "#8fd6c8") : "#f2f6f4");
-      const line = fighting ? ` · ${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m` : rod.phase === "charging" ? ` · ${Math.round(castDistance(rod.charge))} m` : "";
-      action.dataset.detail = rod.pending ? "Sealed cast, only you can read it" : rod.phase === "idle" ? "hold to aim, let go to throw" : line;
+      const line = fighting ? `${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m to the boat` : rod.phase === "charging" ? `${Math.round(castDistance(rod.charge))} m` : "";
+      const detail = rod.pending ? "Sealed cast, only you can read it" : rod.phase === "idle" ? "Hold to aim, let go to throw" : line;
+      if (actionDetail.textContent !== detail) actionDetail.textContent = detail;
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";
       if (bonus.textContent !== twinText) bonus.textContent = twinText;
@@ -566,18 +570,19 @@ export function createFishing({ scene, body, patchMaterial, market, schools, bas
       const away = net.phase === "out" ? netDistance(net, body.pos.x, body.pos.z) : 0;
       const ready = net.phase === "out" && away <= NET.reach && netFish(net) > 0;
       const netState = !market.hold.hasNet
-        ? ["Net", "Buy a net", `${NET.price} coins at the market`]
+        ? ["Buy a net", `${NET.price} coins at the market`]
         : net.phase === "out"
           ? away <= NET.reach
-            ? ["Net out", `${netFish(net)} of ${NET.capacity} fish`, "tap to haul it in"]
-            : ["Net out", `${Math.round(away)} m away`, `come within ${NET.reach} m`]
+            ? ["Haul in net", `${netFish(net)} of ${NET.capacity} fish inside`]
+            : [`Net ${Math.round(away)} m away`, `Sail within ${NET.reach} m to haul`]
           : inRound
-            ? ["Trap net", round.netsOut() ? "Hidden, set" : "Set a hidden net", "steals rivals' fish"]
-            : ["Net", "Set net here", "fills while you fish"];
+            ? [round.netsOut() ? "Hidden net set" : "Set hidden net", "Steals rivals' fish"]
+            : ["Set net here", "Fills while you fish"];
       const netKey = netState.join("|") + ready;
       if (netButton.dataset.key !== netKey) {
         netButton.dataset.key = netKey;
-        fill(netButton, netState[0], netState[1], netState[2]);
+        netTitle.textContent = netState[0];
+        netDetail.textContent = netState[1];
         netButton.classList.toggle("ready", ready);
       }
     },

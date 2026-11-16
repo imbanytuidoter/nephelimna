@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { islandHeight } from "../ocean/scene/islandHeight.js";
 import { createAudio } from "./audio.js";
+import { createVolume } from "./volume.js";
 import { createCollisions } from "./blocks.js";
 import { createBump } from "./bump.js";
 import { createBoatFlag } from "./boatFlag.js";
@@ -86,9 +87,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   const tradePrompt = document.getElementById("trade-prompt");
   const joinButton = document.getElementById("round-join");
   const help = createHelp({ touch, netPrice: NET.price, onDepth: () => fishing.cycleDepth(), onJoin: () => joinButton.click() });
-  const muteButton = document.getElementById("mute");
-  muteButton.textContent = audio.muted ? "Sound off" : "Sound on";
-  muteButton.addEventListener("click", () => (muteButton.textContent = audio.toggleMute() ? "Sound off" : "Sound on"));
+  createVolume({ audio });
   let gullIn = 6;
   let creakIn = 9;
   let stepIn = 0;
