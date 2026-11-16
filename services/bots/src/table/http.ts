@@ -104,7 +104,7 @@ export function createHttp(routes: Routes) {
           const body = (await readBody(request, PRESENCE_BODY)) as Record<string, unknown>;
           const boats = presence.update(body, now);
           if (!boats) return reply(response, 400, { error: "bad position" });
-          return reply(response, 200, { boats: boats.map(({ at: _at, ...boat }) => boat) });
+          return reply(response, 200, { boats: boats.map(({ at, ...boat }) => ({ ...boat, age: now - at })) });
         }
         if (request.method === "POST" && path === "/save") {
           if (!savesByIp(clientIp(request), now)) return reply(response, 429, { ok: false, reason: "slow down" });

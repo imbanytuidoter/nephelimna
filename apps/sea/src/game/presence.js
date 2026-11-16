@@ -3,9 +3,10 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { hullMetrics } from "./hull.js";
 import { HULL } from "./tuning.js";
 import { boatName, cleanName, loadName, saveName } from "./names.js";
+import { createTrack } from "./track.js";
 
 const SEND_EVERY = 0.25;
-const SMOOTH = 7;
+const SMOOTH = 12;
 const STALE_AFTER = 3;
 const FAILURES_BEFORE_CLEAR = 6;
 const REFLECTION_LAYER = 1;
@@ -67,7 +68,7 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
   );
 
   const shownName = (boat) => cleanName(boat.name) ?? boatName(boat.id);
-  const spawn = (boat) => {
+  const spawn = (boat, now) => {
     const object = new THREE.Group();
     object.name = "remote-boat";
     object.position.set(boat.x, boat.y, boat.z);
@@ -79,7 +80,9 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
     tag.textContent = shownName(boat);
     tag.hidden = true;
     tags.append(tag);
-    return { object, tag, target: boat, yaw: boat.yaw, seen: performance.now(), loaded: Boolean(template) };
+    const track = createTrack();
+    track.push(boat, now / 1000);
+    return { object, tag, track, yaw: boat.yaw, seen: performance.now(), loaded: Boolean(template) };
   };
 
   const drop = (key, entry) => {
@@ -105,11 +108,11 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
       present.add(boat.id);
       const known = remote.get(boat.id);
       if (known) {
-        known.target = boat;
+        known.track.push(boat, now / 1000);
         known.seen = now;
         const label = shownName(boat);
         if (known.tag.textContent !== label) known.tag.textContent = label;
-      } else remote.set(boat.id, spawn(boat));
+      } else remote.set(boat.id, spawn(boat, now));
     }
     for (const [key, entry] of remote) {
       if (present.has(key)) continue;
@@ -126,7 +129,7 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
       const response = await fetch(new URL("presence", api), {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, name, x: body.pos.x, y: body.pos.y, z: body.pos.z, yaw: Math.atan2(-fwd.z, fwd.x) }),
+        body: JSON.stringify({ id, name, t: Math.round(performance.now()) / 1000, x: body.pos.x, y: body.pos.y, z: body.pos.z, yaw: Math.atan2(-fwd.z, fwd.x) }),
       });
       if (!response.ok) throw new Error(`presence ${response.status}`);
       const data = await response.json();
@@ -168,11 +171,13 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
           entry.object.add(template.clone(true));
           entry.loaded = true;
         }
-        const t = entry.target;
-        entry.object.position.x += (t.x - entry.object.position.x) * k;
-        entry.object.position.y += (t.y - entry.object.position.y) * k;
-        entry.object.position.z += (t.z - entry.object.position.z) * k;
-        entry.yaw = turnToward(entry.yaw, t.yaw, k);
+        const t = entry.track.at(now / 1000);
+        if (t) {
+          entry.object.position.x += (t.x - entry.object.position.x) * k;
+          entry.object.position.y += (t.y - entry.object.position.y) * k;
+          entry.object.position.z += (t.z - entry.object.position.z) * k;
+          entry.yaw = turnToward(entry.yaw, t.yaw, k);
+        }
         entry.object.rotation.y = entry.yaw;
         placeTag(entry);
         const ax = { x: Math.cos(entry.yaw), z: -Math.sin(entry.yaw) };

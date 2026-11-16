@@ -36,6 +36,14 @@ describe("presence", () => {
     expect(presence.update(at(B), 2)).toBeNull();
   });
 
+  it("passes the sender's own clock so others can space its reports evenly, and drops a bad one", () => {
+    const presence = createPresence();
+    presence.update({ ...at(A), t: 812.25 }, 0);
+    expect(presence.update(at(B), 1)?.[0]?.t).toBe(812.25);
+    presence.update({ ...at(A), t: "soon" }, 2);
+    expect(presence.update(at(B), 3)?.[0]?.t).toBeNull();
+  });
+
   it("passes a chosen name to other boats", () => {
     const presence = createPresence();
     presence.update({ ...at(A), name: "  Old   Salt " }, 0);
