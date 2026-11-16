@@ -1,0 +1,21 @@
+{
+  "name": "@nephelimna/bots",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm --filter @nephelimna/rules build && vitest run",
+    "build": "pnpm --filter @nephelimna/rules build && tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@nephelimna/rules": "workspace:*",
+    "@zama-fhe/sdk": "3.7.2",
+    "viem": "^2.57.17"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0",
+    "vitest": "^4.0.0",
+    "@vitest/coverage-v8": "^4.0.0"
+  }
+}
