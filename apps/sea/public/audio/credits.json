@@ -1,0 +1,146 @@
+{
+ "sea": {
+  "source": "https://freesound.org/people/kyles/sounds/637980/",
+  "author": "kyles",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "waves lap at small boat hull motorboat +distant birds.flac"
+ },
+ "wind": {
+  "source": "https://freesound.org/people/dhallcomposer/sounds/697217/",
+  "author": "dhallcomposer",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Looping Gentle Wind Ambience on an Open Desert Plain.wav"
+ },
+ "gulls": {
+  "source": "https://freesound.org/people/SiriusParsec/sounds/532092/",
+  "author": "SiriusParsec",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Lost seagull.wav"
+ },
+ "engine": {
+  "source": "https://freesound.org/people/AugustSandberg/sounds/264864/",
+  "author": "AugustSandberg",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Marine diesel engine"
+ },
+ "wash": {
+  "source": "https://freesound.org/people/4billboards/sounds/512126/",
+  "author": "4billboards",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Sailboat-wake_hissing-light_breeze.wav"
+ },
+ "cast": {
+  "source": "https://freesound.org/people/el_boss/sounds/853287/",
+  "author": "el_boss",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Casting Fishing Rod for Game Fishing SFX"
+ },
+ "plop": {
+  "source": "https://freesound.org/people/el_boss/sounds/853279/",
+  "author": "el_boss",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Fishing Lure Plop Water - Game SFX (2 or 2)"
+ },
+ "splash_small": {
+  "source": "https://freesound.org/people/dslrguide/sounds/321490/",
+  "author": "dslrguide",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Tiny Splash"
+ },
+ "splash_medium": {
+  "source": "https://freesound.org/people/paulprit/sounds/507094/",
+  "author": "paulprit",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Fish Splashing Release 1.wav"
+ },
+ "splash_big": {
+  "source": "https://freesound.org/people/qubodup/sounds/442773/",
+  "author": "qubodup",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Big Water Splash"
+ },
+ "reel": {
+  "source": "https://bigsoundbank.com/fishing-reel-fast-s1435.html",
+  "author": "Joseph Sardin (BigSoundBank)",
+  "licence": "CC0 1.0: sound page FAQ \"I intentionally release it under the CC0 license (public-domain equivalent)\"; https://bigsoundbank.com/licenses.html \"This is: Creative Commons CC0 1.0 Universal\"",
+  "original": "Fishing reel, fast"
+ },
+ "drag": {
+  "source": "https://freesound.org/people/paulprit/sounds/507070/",
+  "author": "paulprit",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Angel Fly Fish Reel Fast Pull_1.wav"
+ },
+ "snap": {
+  "source": "https://freesound.org/people/baidonovan/sounds/187354/",
+  "author": "baidonovan",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Rubber Band Snap.wav"
+ },
+ "bite": {
+  "source": "https://kenney.nl/assets/interface-sounds",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "confirmation_001.ogg"
+ },
+ "catch": {
+  "source": "https://kenney.nl/assets/music-jingles",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "jingles_STEEL10.ogg"
+ },
+ "rare": {
+  "source": "https://kenney.nl/assets/music-jingles",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "jingles_STEEL07.ogg"
+ },
+ "chest": {
+  "source": "https://freesound.org/people/steprock/sounds/771164/",
+  "author": "steprock",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "Treasure Chest Open"
+ },
+ "coins": {
+  "source": "https://kenney.nl/assets/rpg-audio",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "handleCoins.ogg"
+ },
+ "click": {
+  "source": "https://kenney.nl/assets/interface-sounds",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "click_001.ogg"
+ },
+ "deny": {
+  "source": "https://kenney.nl/assets/interface-sounds",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "error_006.ogg"
+ },
+ "step": {
+  "source": "https://kenney.nl/assets/impact-sounds",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "footstep_wood_000.ogg"
+ },
+ "anchor": {
+  "source": "https://freesound.org/people/fennelliott/sounds/347837/",
+  "author": "fennelliott",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "anchor and chain.wav"
+ },
+ "creak": {
+  "source": "https://freesound.org/people/Walter_Odington/sounds/31574/",
+  "author": "Walter_Odington",
+  "licence": "Creative Commons 0 (CC0 1.0), stated on the sound page with link http://creativecommons.org/publicdomain/zero/1.0/",
+  "original": "ship_creak.mp3"
+ },
+ "bump": {
+  "source": "https://kenney.nl/assets/impact-sounds",
+  "author": "Kenney (kenney.nl)",
+  "licence": "CC0 1.0: asset page \"License Creative Commons CC0\"; License.txt in zip \"License: (Creative Commons Zero, CC0)\"",
+  "original": "impactPlank_medium_000.ogg"
+ }
+}
