@@ -1,0 +1,51 @@
+nephelimna.imbanytui.xyz {
+	encode zstd gzip {
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/javascript*
+			header Content-Type application/wasm*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+			header Content-Type model/gltf-binary*
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' data: blob: https://relayer.testnet.zama.org https://*.s3.eu-west-1.amazonaws.com https://*.s3.amazonaws.com; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		X-Robots-Tag "noindex"
+		-Server
+	}
+
+	@sea path /sea /sea/*
+	header @sea Cross-Origin-Opener-Policy "same-origin"
+	header @sea Cross-Origin-Embedder-Policy "credentialless"
+
+	handle_path /sea/api/* {
+		request_body {
+			max_size 256KB
+		}
+		reverse_proxy 127.0.0.1:3430 {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	@legacy not path /sea /sea/* /ocean /ocean/* /robots.txt
+	redir @legacy /sea/ 302
+
+	root * /var/www/nephelimna/current
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=86400"
+	@pages not path /_next/static/* /assets/*
+	header @pages Cache-Control "no-cache"
+	try_files {path} {path}.html {path}/index.html
+	@glb path *.glb
+	header @glb Content-Type model/gltf-binary
+	file_server
+}
