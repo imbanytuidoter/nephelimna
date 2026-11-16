@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FHE, ebool, euint8, euint16} from "@fhevm/solidity/lib/FHE.sol";
-import {Round} from "./NepheTypes.sol";
+import {Sea, Angler, CELLS} from "./NepheTypes.sol";
 import {NepheLake} from "./NepheLake.sol";
 import {NepheScore} from "./NepheScore.sol";
 import {NepheTraps} from "./NepheTraps.sol";
@@ -13,9 +13,10 @@ library NepheCast {
     uint8 internal constant LIVE_FISH = 2;
 
     /// @dev The same sequence of FHE operations runs for an empty cast, a catch, the Leviathan and a
-    /// netted catch, so gas and HCU depend only on the public cell and seat count.
-    function resolve(Round storage round, uint8 seat, uint8 cell, euint8 choice, address reader) internal {
-        euint16 packed = round.cells[cell];
+    /// netted catch, and a fresh square is always rolled and then kept or dropped with FHE.select,
+    /// so gas and HCU depend only on the public square and the number of live nets.
+    function resolve(Sea storage sea, address player, uint8 cell, euint8 choice, address reader) internal {
+        euint16 packed = sea.cells[cell];
         euint8 depth = FHE.and(choice, DEPTH_MASK);
         euint8 bait = FHE.shr(choice, uint8(2));
         ebool d0 = FHE.eq(depth, uint8(0));
@@ -24,34 +25,45 @@ library NepheCast {
         euint16 layer = FHE.select(d0, NepheLake.layerAt(packed, 0), FHE.select(d1, NepheLake.layerAt(packed, 1), NepheLake.layerAt(packed, 2)));
         euint16 rarity = FHE.shr(layer, uint8(2));
         ebool caught = FHE.and(FHE.gt(FHE.and(layer, uint16(3)), uint16(0)), _bites(bait, rarity));
-
-        euint16 step = FHE.select(d0, FHE.asEuint16(1), FHE.select(d1, FHE.asEuint16(32), FHE.asEuint16(1024)));
-        packed = FHE.sub(packed, FHE.select(caught, step, FHE.asEuint16(0)));
-        round.cells[cell] = packed;
-        FHE.allowThis(packed);
-        round.hot[cell] = NepheLake.hotOf(packed);
-        FHE.allowThis(round.hot[cell]);
-
-        ebool lev = FHE.and(FHE.and(FHE.eq(round.levPos, cell), FHE.eq(depth, BOTTOM)), FHE.and(FHE.eq(bait, LIVE_FISH), FHE.not(round.levCaught)));
-        round.levCaught = FHE.or(round.levCaught, lev);
-        FHE.allowThis(round.levCaught);
+        ebool lev = FHE.and(FHE.and(FHE.eq(sea.levPos, cell), FHE.eq(depth, BOTTOM)), FHE.eq(bait, LIVE_FISH));
 
         euint8 weight = FHE.select(lev, FHE.asEuint8(NepheScore.LEVIATHAN), FHE.select(caught, NepheScore.points(rarity), FHE.asEuint8(0)));
         ebool small = FHE.and(FHE.and(caught, FHE.not(lev)), FHE.le(rarity, uint16(2)));
-        ebool snagged = NepheTraps.settle(round, seat, cell, weight, small);
+        ebool snagged = NepheTraps.settle(sea, player, cell, weight, small);
 
-        round.lastCatch[seat] = FHE.select(snagged, FHE.asEuint8(0), weight);
-        round.lastRareNear[seat] = NepheLake.rareNear(round, cell);
-        round.lastLevNear[seat] = NepheLake.levNear(round, cell);
-        round.lastSnagged[seat] = snagged;
-        FHE.allowThis(round.lastCatch[seat]);
-        FHE.allow(round.lastCatch[seat], reader);
-        FHE.allowThis(round.lastRareNear[seat]);
-        FHE.allow(round.lastRareNear[seat], reader);
-        FHE.allowThis(round.lastLevNear[seat]);
-        FHE.allow(round.lastLevNear[seat], reader);
-        FHE.allowThis(round.lastSnagged[seat]);
-        FHE.allow(round.lastSnagged[seat], reader);
+        _restock(sea, cell, packed, FHE.or(caught, lev));
+        sea.levPos = FHE.select(lev, FHE.randEuint8(CELLS), sea.levPos);
+        FHE.allowThis(sea.levPos);
+
+        Angler storage angler = sea.anglers[player];
+        angler.lastCatch = FHE.select(snagged, FHE.asEuint8(0), weight);
+        angler.lastRareNear = NepheLake.rareNear(sea, cell);
+        angler.lastLevNear = NepheLake.levNear(sea, cell);
+        angler.lastSnagged = snagged;
+        _share(angler.lastCatch, reader, player);
+        _share(angler.lastRareNear, reader, player);
+        _share(angler.lastLevNear, reader, player);
+        _share(angler.lastSnagged, reader, player);
+    }
+
+    function _restock(Sea storage sea, uint8 cell, euint16 packed, ebool used) private {
+        (euint16 fresh, ebool freshHot) = NepheLake.roll();
+        sea.cells[cell] = FHE.select(used, fresh, packed);
+        sea.hot[cell] = FHE.select(used, freshHot, sea.hot[cell]);
+        FHE.allowThis(sea.cells[cell]);
+        FHE.allowThis(sea.hot[cell]);
+    }
+
+    function _share(euint8 value, address reader, address player) private {
+        FHE.allowThis(value);
+        FHE.allow(value, reader);
+        if (player != reader) FHE.allow(value, player);
+    }
+
+    function _share(ebool value, address reader, address player) private {
+        FHE.allowThis(value);
+        FHE.allow(value, reader);
+        if (player != reader) FHE.allow(value, player);
     }
 
     function _bites(euint8 bait, euint16 rarity) private returns (ebool) {

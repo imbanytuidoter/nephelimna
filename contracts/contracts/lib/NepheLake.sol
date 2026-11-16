@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {FHE, ebool, euint8, euint16} from "@fhevm/solidity/lib/FHE.sol";
-import {Round, SIZE, CELLS, LAYER_BITS} from "./NepheTypes.sol";
+import {Sea, SIZE, CELLS, LAYER_BITS} from "./NepheTypes.sol";
 
 library NepheLake {
     function thresholds(uint8 depth) internal pure returns (uint16[4] memory) {
@@ -17,39 +17,30 @@ library NepheLake {
         return ((uint16(rarity) << 2) | stock) << (depth * LAYER_BITS);
     }
 
-    function generate(Round storage round, uint8 count) internal {
-        euint16[5][3] memory layerConst;
-        for (uint8 d = 0; d < 3; d++) {
-            for (uint8 k = 0; k < 5; k++) layerConst[d][k] = FHE.asEuint16(layerValue(d, k));
-        }
-        uint8 from = round.generated;
+    function generate(Sea storage sea, uint8 count) internal {
+        euint16[5][3] memory layerConst = _layerConst();
+        uint8 from = sea.generated;
         for (uint8 i = from; i < from + count; i++) {
             (euint16 cell, ebool hot) = _cell(layerConst);
-            round.cells[i] = cell;
-            round.hot[i] = hot;
+            sea.cells[i] = cell;
+            sea.hot[i] = hot;
             FHE.allowThis(cell);
             FHE.allowThis(hot);
         }
-        round.generated = from + count;
+        sea.generated = from + count;
     }
 
-    function placeLeviathan(Round storage round) internal {
-        round.levPos = FHE.randEuint8(CELLS);
-        round.levCaught = FHE.asEbool(false);
-        FHE.allowThis(round.levPos);
-        FHE.allowThis(round.levCaught);
+    function roll() internal returns (euint16 cell, ebool hot) {
+        return _cell(_layerConst());
+    }
+
+    function placeLeviathan(Sea storage sea) internal {
+        sea.levPos = FHE.randEuint8(CELLS);
+        FHE.allowThis(sea.levPos);
     }
 
     function layerAt(euint16 cell, uint8 depth) internal returns (euint16) {
         return FHE.and(FHE.shr(cell, depth * LAYER_BITS), uint16(31));
-    }
-
-    function hotOf(euint16 packed) internal returns (ebool hot) {
-        hot = FHE.asEbool(false);
-        for (uint8 d = 0; d < 3; d++) {
-            euint16 layer = layerAt(packed, d);
-            hot = FHE.or(hot, FHE.and(FHE.ge(layer, uint16(12)), FHE.gt(FHE.and(layer, uint16(3)), uint16(0))));
-        }
     }
 
     function neighbours(uint8 cell, uint8[8] memory out) internal pure returns (uint8 n) {
@@ -66,19 +57,25 @@ library NepheLake {
         }
     }
 
-    function rareNear(Round storage round, uint8 cell) internal returns (ebool near) {
+    function rareNear(Sea storage sea, uint8 cell) internal returns (ebool near) {
         near = FHE.asEbool(false);
         uint8[8] memory ns;
         uint8 n = neighbours(cell, ns);
-        for (uint8 i = 0; i < n; i++) near = FHE.or(near, round.hot[ns[i]]);
+        for (uint8 i = 0; i < n; i++) near = FHE.or(near, sea.hot[ns[i]]);
     }
 
-    function levNear(Round storage round, uint8 cell) internal returns (ebool) {
+    function levNear(Sea storage sea, uint8 cell) internal returns (ebool) {
         uint8[8] memory ns;
         uint8 n = neighbours(cell, ns);
         euint8[] memory set = new euint8[](n);
         for (uint8 i = 0; i < n; i++) set[i] = FHE.asEuint8(ns[i]);
-        return FHE.isIn(round.levPos, set);
+        return FHE.isIn(sea.levPos, set);
+    }
+
+    function _layerConst() private returns (euint16[5][3] memory layerConst) {
+        for (uint8 d = 0; d < 3; d++) {
+            for (uint8 k = 0; k < 5; k++) layerConst[d][k] = FHE.asEuint16(layerValue(d, k));
+        }
     }
 
     function _cell(euint16[5][3] memory layerConst) private returns (euint16 cell, ebool hot) {

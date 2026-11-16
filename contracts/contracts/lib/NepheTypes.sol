@@ -5,41 +5,40 @@ import {ebool, euint8, euint16, euint32} from "@fhevm/solidity/lib/FHE.sol";
 
 uint8 constant SIZE = 8;
 uint8 constant CELLS = 64;
-uint8 constant MAX_SEATS = 10;
-uint8 constant TIDES = 3;
-uint8 constant CASTS_PER_TIDE = 6;
 uint8 constant GENERATE_BATCH = 6;
 uint8 constant LAYER_BITS = 5;
-uint8 constant NO_SEAT = 255;
+uint8 constant NET_SLOTS = 8;
+uint8 constant NETS_PER_PLAYER = 2;
+uint64 constant NET_LIFETIME = 1 hours;
+uint8 constant NAME_BYTES = 64;
+uint8 constant NO_SLOT = 255;
 
-enum Stage {
-    None,
-    Lobby,
-    Fishing,
-    Finished,
-    Revealing,
-    Revealed
+struct Angler {
+    address session;
+    uint32 casts;
+    bool posting;
+    uint32 posted;
+    uint64 postedAt;
+    euint32 score;
+    euint32 pending;
+    euint8 lastCatch;
+    ebool lastRareNear;
+    ebool lastLevNear;
+    ebool lastSnagged;
 }
 
-struct Round {
-    Stage stage;
-    uint8 seats;
+struct Net {
+    address owner;
+    uint64 until;
+    euint8 cell;
+}
+
+struct Sea {
     uint8 generated;
-    uint8 tide;
-    bool leviathanPlaced;
-    address[10] players;
-    address[10] sessions;
-    uint8[10] castsLeft;
-    uint8[10] netsTide;
     euint16[64] cells;
     ebool[64] hot;
     euint8 levPos;
-    ebool levCaught;
-    euint8[2][10] nets;
-    euint32[10] scores;
-    euint8[10] lastCatch;
-    ebool[10] lastRareNear;
-    ebool[10] lastLevNear;
-    ebool[10] lastSnagged;
-    uint32[10] finalScores;
+    Net[8] nets;
+    mapping(address => Angler) anglers;
+    mapping(address => address) playerOf;
 }
