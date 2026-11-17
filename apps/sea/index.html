@@ -181,9 +181,8 @@
     }
     #underwater {
       position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: min(240px, 34vw); aspect-ratio: 4 / 3;
-      border-radius: 16px; overflow: hidden; background: #0b3a47; box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.14), 0 8px 24px rgba(0, 0, 0, 0.3); pointer-events: none;
+      border-radius: 16px; overflow: hidden; background: transparent; box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.14), 0 8px 24px rgba(0, 0, 0, 0.3); pointer-events: none;
     }
-    #underwater canvas { display: block; width: 100%; height: 100%; }
     #underwater p { position: absolute; left: 10px; top: 8px; margin: 0; padding: 3px 8px; border-radius: 8px; font: 600 11px ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: rgba(5, 22, 28, 0.55); }
     @media (max-width: 560px) { #underwater { width: 38vw; bottom: auto; top: max(150px, calc(env(safe-area-inset-top) + 136px)); } }
     #underwater[hidden], #fishing[hidden], #fish-meter[hidden], #catch-card[hidden], .bar[hidden], .bar-label[hidden] { display: none; }
@@ -327,6 +326,7 @@
     #help-list button:focus-visible, #help-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
     #help .keys { display: flex; flex-wrap: wrap; gap: 3px; }
     #help kbd { min-width: 22px; box-sizing: border-box; padding: 3px 6px; border-radius: 5px; text-align: center; font: 700 11px ui-monospace, Menlo, monospace; color: #0b1518; background: rgba(242, 246, 244, 0.92); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45); }
+    .line-out #help { visibility: hidden; }
     .on-deck #help { bottom: auto; top: max(120px, calc(env(safe-area-inset-top) + 106px)); }
     @media (max-width: 560px) { #help { width: min(280px, calc(100vw - 32px)); } #help-list li > * { grid-template-columns: 84px 1fr; } }
     #crosshair { position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(242, 246, 244, 0.85); box-shadow: 0 0 0 2px rgba(8, 16, 19, 0.5); pointer-events: none; }
@@ -380,7 +380,7 @@
   </div>
   <div id="boat-tags" aria-hidden="true"></div>
   <div id="stick" hidden><i></i></div>
-  <div id="underwater" hidden><canvas aria-hidden="true"></canvas><p></p></div>
+  <div id="underwater" hidden><p></p></div>
   <div id="fishing" hidden>
     <p id="fish-message" role="status" aria-live="polite"></p>
     <p id="fish-bonus"></p>

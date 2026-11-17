@@ -169,6 +169,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
     life,
     market,
     fishing,
+    renderInsets: (renderer) => fishing.renderInset(renderer),
     audio,
     presence,
     setMode,

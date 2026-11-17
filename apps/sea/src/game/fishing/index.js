@@ -341,6 +341,9 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
     setResolution(width, height) {
       gear.setResolution(width, height);
     },
+    renderInset(renderer) {
+      underwater.render(renderer);
+    },
     get state() {
       return { rod, depth, bait, active };
     },

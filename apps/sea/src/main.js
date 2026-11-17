@@ -451,6 +451,7 @@ function renderFrame(dt) {
 
   timer.begin('post');
   post.render(frame, dt);
+  game?.renderInsets(renderer);
   timer.endFrame();
 }
 
