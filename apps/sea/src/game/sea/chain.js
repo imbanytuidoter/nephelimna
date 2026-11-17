@@ -16,6 +16,9 @@ const DECRYPT_TRIES = 6;
 const RETRY_MS = 2500;
 const READ_TRIES = 8;
 const BALANCE_TRIES = 40;
+const RECEIPT_POLL_MS = 1000;
+const BROADCAST_TRIES = 4;
+const BLOCK_WAIT_MS = 6000;
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -33,22 +36,51 @@ async function retry(tries, run) {
 export function createSeaChain({ rpcUrl, address, key }) {
   const account = privateKeyToAccount(key);
   const transport = http(rpcUrl, { timeout: 30_000, retryCount: 2 });
-  const publicClient = createPublicClient({ chain: sepolia, transport });
+  const publicClient = createPublicClient({ chain: sepolia, transport, pollingInterval: RECEIPT_POLL_MS });
   const walletClient = createWalletClient({ account, chain: sepolia, transport });
   const sdk = new ZamaSDK(createConfig({ chains: [{ ...zamaSepolia, network: rpcUrl }], publicClient, walletClient, relayers: { [zamaSepolia.id]: web() } }));
 
   let queue = Promise.resolve();
-  /** Two transactions from the session key at once would take the same nonce, so they are sent one after another. */
-  const send = (functionName, args, gas) => {
-    const next = queue.then(() => sendNow(functionName, args, gas));
+  let busy = 0;
+  let nextNonce = 0;
+  /** Two transactions from the session key at once would take the same nonce, and castResult keeps only the last cast, so transactions go one after another, each after the previous one is mined. */
+  const send = (functionName, args, gas, onTurn = () => {}) => {
+    if (busy > 0) onTurn(false);
+    busy += 1;
+    const next = queue
+      .then(() => {
+        onTurn(true);
+        return sendNow(functionName, args, gas);
+      })
+      .finally(() => (busy -= 1));
     queue = next.catch(() => undefined);
     return next;
+  };
+
+  /** The RPC balances across nodes, and a node a block behind reports the nonce from before our last mined transaction or a balance from before the faucet paid, so the next nonce is tracked here, a refused nonce moves on to the next one, and a refused balance is tried again on a later block. */
+  const broadcast = async (data, gas, gasPrice) => {
+    const counted = await publicClient.getTransactionCount({ address: account.address, blockTag: "pending" });
+    for (let attempt = 1; ; attempt++) {
+      const nonce = Math.max(nextNonce, counted);
+      try {
+        const hash = await walletClient.sendTransaction({ to: address, data, gas, gasPrice, nonce, type: "legacy" });
+        nextNonce = nonce + 1;
+        return hash;
+      } catch (error) {
+        const text = String(error?.message ?? error);
+        const staleNonce = /nonce too low|nonce provided for the transaction is lower/i.test(text);
+        const staleBalance = /exceeds the balance|insufficient funds/i.test(text);
+        if (attempt >= BROADCAST_TRIES || !(staleNonce || staleBalance)) throw error;
+        if (staleNonce) nextNonce = nonce + 1;
+        else await pause(BLOCK_WAIT_MS);
+      }
+    }
   };
 
   const sendNow = async (functionName, args, gas) => {
     const live = await publicClient.getGasPrice();
     const gasPrice = live * GAS_PRICE_HEADROOM > GAS_PRICE_FLOOR ? live * GAS_PRICE_HEADROOM : GAS_PRICE_FLOOR;
-    const hash = await walletClient.sendTransaction({ to: address, data: encodeFunctionData({ abi, functionName, args }), gas, gasPrice, type: "legacy" });
+    const hash = await broadcast(encodeFunctionData({ abi, functionName, args }), gas, gasPrice);
     const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: RECEIPT_TIMEOUT_MS });
     if (receipt.status !== "success") throw new Error(`${functionName} was refused by the contract`);
     return receipt;
@@ -79,8 +111,7 @@ export function createSeaChain({ rpcUrl, address, key }) {
     async cast(cell, depth, bait, onStage = () => {}) {
       onStage("Sealing your bait");
       const enc = await encrypt([packChoice(depth, bait)]);
-      onStage("Out on Sepolia");
-      const receipt = await send("cast", [cell, enc.encryptedValues[0], enc.inputProof], SEA.castGas);
+      const receipt = await send("cast", [cell, enc.encryptedValues[0], enc.inputProof], SEA.castGas, (turn) => onStage(turn ? "Line out on Sepolia" : "Behind your last line"));
       onStage("Reading your catch");
       const handles = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "castResult", args: [account.address], blockNumber: receipt.blockNumber }));
       const clear = await retry(DECRYPT_TRIES, () => sdk.decryption.decryptValues(handles.map((encryptedValue) => ({ encryptedValue, contractAddress: address })), { timeout: DECRYPT_TIMEOUT_MS }));

@@ -179,7 +179,14 @@
       position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom));
       width: min(320px, 46vw); display: flex; flex-direction: column; gap: 8px; align-items: stretch;
     }
-    #fishing[hidden], #fish-meter[hidden], #catch-card[hidden], .bar[hidden], .bar-label[hidden] { display: none; }
+    #underwater {
+      position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: min(240px, 34vw); aspect-ratio: 4 / 3;
+      border-radius: 16px; overflow: hidden; background: #0b3a47; box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.14), 0 8px 24px rgba(0, 0, 0, 0.3); pointer-events: none;
+    }
+    #underwater canvas { display: block; width: 100%; height: 100%; }
+    #underwater p { position: absolute; left: 10px; top: 8px; margin: 0; padding: 3px 8px; border-radius: 8px; font: 600 11px ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: rgba(5, 22, 28, 0.55); }
+    @media (max-width: 560px) { #underwater { width: 38vw; bottom: auto; top: max(150px, calc(env(safe-area-inset-top) + 136px)); } }
+    #underwater[hidden], #fishing[hidden], #fish-meter[hidden], #catch-card[hidden], .bar[hidden], .bar-label[hidden] { display: none; }
     #fish-message { margin: 0; padding: 8px 10px; border-radius: 10px; font-size: 13px; background: var(--shade); backdrop-filter: blur(6px); }
     #fish-message:empty, #fish-bonus:empty { display: none; }
     #fish-bonus { margin: 0; padding: 5px 10px; border-radius: 10px; font-size: 11px; color: var(--accent); background: var(--shade); }
@@ -373,6 +380,7 @@
   </div>
   <div id="boat-tags" aria-hidden="true"></div>
   <div id="stick" hidden><i></i></div>
+  <div id="underwater" hidden><canvas aria-hidden="true"></canvas><p></p></div>
   <div id="fishing" hidden>
     <p id="fish-message" role="status" aria-live="polite"></p>
     <p id="fish-bonus"></p>

@@ -66,7 +66,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   const propeller = createPropeller({ boat: body.object, patchMaterial, centerX });
   const market = createMarket({ scene, site, patchMaterial, baseUrl, onChanged: onStaticChanged, onSold: () => audio.play("coins", 0.8), onFlag: (id) => flag.set(id) });
   const sea = createSea({ baseUrl, cellName: cellLabel, nameOf: () => presence.name });
-  const fishing = createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea });
+  const fishing = createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea, cellName: cellLabel });
   createProgress({ baseUrl });
   createHoldPanel({ market, baseUrl, audio });
   const restored = loadSession(Date.now(), fishing.gearSizes);

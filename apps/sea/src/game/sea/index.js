@@ -147,7 +147,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   }
 
   function cast(cell, depth, bait) {
-    const ticket = { status: "pending", result: null, stage: "Starting", startedAt: Date.now() };
+    const ticket = { status: "pending", result: null, stage: "Starting", startedAt: Date.now(), cell };
     const onStage = (stage) => (ticket.stage = stage);
     void ensureJoined(onStage)
       .then((c) => c.cast(cell, depth, bait, onStage))

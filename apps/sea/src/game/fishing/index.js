@@ -4,6 +4,7 @@ import { islandHeight } from "../../ocean/scene/islandHeight.js";
 import { landFish, stowChest } from "../hold.js";
 import { seeded } from "../life/random.js";
 import { createCatchCard } from "./card.js";
+import { createUnderwater } from "./underwater.js";
 import { FIGHT_RULES } from "./fight.js";
 import { createGear } from "./gear.js";
 import { cellIndexAt } from "./lake.js";
@@ -51,7 +52,10 @@ const NOTES = {
   "sea-closed": "The sealed sea is out of reach right now. Try again in a moment.",
   "chain-failed": "The cast did not reach the chain. Try again.",
   snagged: "A hidden net took that fish. A rival scores it.",
+  "line-left": "Line left sealed on chain. Cast again, your catch surfaces when Zama opens it.",
+  "lines-busy": "Three sealed lines are still out. Wait for one to surface.",
 };
+const MAX_LINES = 3;
 const TROPHY_SIZE = { common: 0.5, uncommon: 0.65, rare: 0.85, mythic: 1.2, chest: 1 };
 
 const fwd = new THREE.Vector3();
@@ -69,10 +73,11 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const DOWN = new THREE.Vector3(0, -1, 0);
 const smooth = THREE.MathUtils.smoothstep;
 
-export function createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea }) {
+export function createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea, cellName }) {
   const random = seeded(Date.now() % 100000);
   const gear = createGear({ scene, patchMaterial, baseUrl });
   const card = createCatchCard(baseUrl);
+  const underwater = createUnderwater({ baseUrl, reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches });
   let rod = createRod();
   let depth = 0;
   let bait = 0;
@@ -82,6 +87,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
   let netPlaced = false;
   let landing = null;
   let ticket = null;
+  let lines = [];
   let floatLevel = 0;
   let fire = false;
   let active = false;
@@ -201,14 +207,12 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
     const index = cellIndexAt(target.x, target.z);
     if (!sea.fishing()) return { blocked: true, event: "sea-closed" };
     if (index < 0) return { blocked: true, event: "off-chart" };
+    if (lines.length >= MAX_LINES) return { blocked: true, event: "lines-busy" };
     ticket = sea.cast(index, DEPTHS[depth].value, BAITS[bait].value);
     return { pending: true };
   };
 
-  const verdict = () => {
-    if (!ticket || ticket.status === "pending") return null;
-    const answer = ticket;
-    ticket = null;
+  const outcome = (answer) => {
     if (answer.status === "failed") return { caught: false, event: "chain-failed" };
     const { points, snagged, rareNear, leviathanNear } = answer.result;
     if (leviathanNear) card.showNote("Sonar", "Something huge is moving in a square next to this one.");
@@ -217,6 +221,37 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
     if (points === 0) return random() < LOOT.chance ? { caught: true, shoal: false, species: CHEST } : { caught: false, event: "empty" };
     const species = points >= POINTS_LEVIATHAN ? { ...LEVIATHAN } : { ...rollFish(rarityFromPoints(points), random) };
     return { caught: true, shoal: false, species: { ...species, points } };
+  };
+
+  const verdict = () => {
+    if (!ticket || ticket.status === "pending") return null;
+    const answer = ticket;
+    ticket = null;
+    return outcome(answer);
+  };
+
+  const leave = () => {
+    if (!ticket) return;
+    castPoint(rod.distance, target);
+    lines = [...lines, { ticket, x: target.x, z: target.z }];
+    ticket = null;
+  };
+
+  const surface = () => {
+    const done = lines.filter((line) => line.ticket.status !== "pending");
+    if (!done.length) return;
+    lines = lines.filter((line) => line.ticket.status === "pending");
+    for (const line of done) {
+      const where = cellName(line.ticket.cell);
+      const result = outcome(line.ticket);
+      ripple(line.x, line.z, 0.03, 0.4);
+      if (result.caught) {
+        land(result);
+        note(`Your sealed line in ${where} surfaced with a catch.`, 5);
+      } else if (result.event === "chain-failed") note(`The sealed line in ${where} did not reach the chain.`, 5);
+      else if (result.event === "snagged") note(`Your sealed line in ${where}: a hidden net took the fish.`, 5);
+      else note(`Your sealed line in ${where} came back empty.`, 5);
+    }
   };
 
   const land = (caught) => {
@@ -329,11 +364,13 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       fire = pov.fire;
 
       const before = rod;
-      const step = stepRod(rod, dt, { held, pressed }, { canFish, random, resolve, verdict });
+      const step = stepRod(rod, dt, { held, pressed }, { canFish, random, resolve, verdict, leave });
       rod = step.rod;
       for (const event of step.events) onEvent(event === "splash" && before.phase === "fight" ? "splash-in" : event, before);
+      underwater.update(dt, { active, rod, depth, bait, events: step.events });
       pressed = false;
 
+      surface();
       const seaNote = sea.takeNote();
       if (seaNote) note(seaNote, 6);
       if (netPressed) {
@@ -467,7 +504,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       audio.loop("reel", reeling || rod.phase === "retrieving" ? 0.55 : 0, reeling ? 0.8 + 0.4 * (1 - Math.min(1, tension)) : 1.2);
       audio.loop("drag", fighting && fight.slipping ? 0.7 : 0, 1);
 
-      const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : (PROMPT[rod.phase] ?? "");
+      const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : rod.phase === "idle" && lines.length ? `Cast · ${lines.length} sealed out` : (PROMPT[rod.phase] ?? "");
       const prompt = fighting && ["run", "coil", "jump"].includes(fight.mode) ? "Let it run" : label;
       if (actionLabel.textContent !== prompt) actionLabel.textContent = prompt;
       lockTackle(rod.phase !== "idle");
@@ -477,7 +514,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       action.style.setProperty("--gauge", gauge.toFixed(3));
       action.style.setProperty("--gauge-colour", fighting ? (strain > 0.92 ? "#ff4a3a" : strain > 0.6 ? "#f0b04a" : "#8fd6c8") : "#f2f6f4");
       const line = fighting ? `${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m to the boat` : rod.phase === "charging" ? `${Math.round(castDistance(rod.charge))} m` : "";
-      const detail = rod.pending ? "Sealed cast, only you can read it" : rod.phase === "idle" ? "Hold to aim, let go to throw" : line;
+      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? "Hold to aim, let go to throw" : line;
       if (actionDetail.textContent !== detail) actionDetail.textContent = detail;
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";

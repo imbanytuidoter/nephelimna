@@ -368,20 +368,48 @@ describe("sealed casts", () => {
   };
   const base = { canFish: true, random: () => 0.5 };
 
-  test("the float waits for the chain answer and cannot be reeled in meanwhile", () => {
+  test("the float waits for the chain answer and something nibbles while it waits", () => {
     let answer = null;
-    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => answer };
+    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => answer, leave: () => null };
     let { rod, events } = flyTo(world);
     expect(events).toEqual(["splash"]);
     expect(rod.pending).toBe(true);
-    for (let i = 0; i < 600; i++) ({ rod } = stepRod(rod, 0.016, { held: true, pressed: false }, world));
+    let nibbles = 0;
+    for (let i = 0; i < 600; i++) {
+      ({ rod, events } = stepRod(rod, 0.016, { held: false, pressed: false }, world));
+      nibbles += events.filter((event) => event === "nibble").length;
+    }
     expect(rod.phase).toBe("waiting");
+    expect(nibbles).toBeGreaterThanOrEqual(2);
     answer = { caught: true, shoal: false, species: { name: "x", fight: { strength: 1, stamina: 1, runs: 1 } }, commit: () => null };
     ({ rod, events } = stepRod(rod, 0.016, { held: false, pressed: false }, world));
     expect(events).toEqual(["answered"]);
     expect(rod.pending).toBe(false);
     expect(rod.catch.species.name).toBe("x");
     expect(Number.isFinite(rod.wait)).toBe(true);
+  });
+
+  test("holding the button leaves the sealed line out and frees the rod", () => {
+    let left = 0;
+    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => null, leave: () => left++ };
+    let { rod } = flyTo(world);
+    let events = [];
+    for (let i = 0; i < 60 && rod.phase === "waiting"; i++) ({ rod, events } = stepRod(rod, 0.016, { held: true, pressed: false }, world));
+    expect(events).toEqual(["line-left"]);
+    expect(rod.phase).toBe("retrieving");
+    expect(rod.pending).toBe(false);
+    expect(left).toBe(1);
+  });
+
+  test("a slow chain answer leaves the line out on its own so nobody waits for long", () => {
+    let left = 0;
+    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => null, leave: () => left++ };
+    let { rod } = flyTo(world);
+    let events = [];
+    for (let t = 0; t < ROD.sealedHold + 1 && rod.phase === "waiting"; t += 0.1) ({ rod, events } = stepRod(rod, 0.1, { held: false, pressed: false }, world));
+    expect(events).toEqual(["line-left"]);
+    expect(left).toBe(1);
+    expect(rod.phase).toBe("retrieving");
   });
 
   test("an empty, netted or failed answer reels the line in with its own message", () => {

@@ -20,6 +20,10 @@ export const ROD = {
   retrieve: 1.1,
   landedTime: 1.4,
   lostTime: 0.9,
+  sealedHold: 25,
+  sealedNibbleFirst: 2.2,
+  sealedNibbleGap: 1.6,
+  sealedNibbleSpread: 3,
 };
 
 export function castDistance(charge) {
@@ -60,7 +64,7 @@ export function stepRod(rod, dt, input, world) {
       if (time < flightTime(rod.distance)) return one({ ...rod, time });
       const outcome = world.resolve(rod.distance);
       if (outcome.blocked) return one(to(rod, "retrieving"), outcome.event ?? "blocked");
-      if (outcome.pending) return one(to(rod, "waiting", { wait: Infinity, nibbles: 0, nibbleAt: Infinity, catch: null, pending: true }), "splash");
+      if (outcome.pending) return one(to(rod, "waiting", { wait: Infinity, nibbles: 0, nibbleAt: ROD.sealedNibbleFirst, catch: null, pending: true }), "splash");
       if (!outcome.caught) return one(to(rod, "waiting", { wait: ROD.emptyWait, nibbles: 0, nibbleAt: Infinity, catch: null }), "splash");
       return one(plan(rod, outcome, world.random, false), "splash");
     }
@@ -68,7 +72,16 @@ export function stepRod(rod, dt, input, world) {
       if (!world.canFish) return one(to(rod, "retrieving", { catch: null }), "reeled");
       if (rod.pending) {
         const verdict = world.verdict();
-        if (!verdict) return one({ ...rod, time });
+        if (!verdict) {
+          const hold = input.held ? rod.hold + dt : 0;
+          if (hold >= ROD.holdToRetrieve || time >= ROD.sealedHold) {
+            world.leave();
+            return one(to(rod, "retrieving", { catch: null, pending: false }), "line-left");
+          }
+          const nibbled = time >= rod.nibbleAt;
+          const nibbleAt = nibbled ? time + ROD.sealedNibbleGap + world.random() * ROD.sealedNibbleSpread : rod.nibbleAt;
+          return one({ ...rod, time, hold, nibbleAt }, nibbled ? "nibble" : null);
+        }
         if (!verdict.caught) return one(to(rod, "retrieving", { catch: null, pending: false }), verdict.event);
         return one(plan({ ...rod, pending: false }, verdict, world.random, false), "answered");
       }
