@@ -12,6 +12,8 @@ const GAP_SPREAD_MS = 420_000;
 const POST_AFTER = [6, 12] as const;
 const FIRST_POST = [2, 3] as const;
 const START_SPREAD_MS = 180_000;
+const FUND_CHECKS = 10;
+const FUND_CHECK_MS = 3000;
 
 interface Style {
   readonly name: string;
@@ -80,11 +82,16 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
     persist();
   };
 
+  /** Public nodes lag each other, so right after the keeper pays, the node that takes the cast can still see the old balance; the bot waits until its balance shows up. */
   async function fund(address: Hex) {
     const balance = await chain.publicClient.getBalance({ address });
     if (balance >= FUND_FLOOR_WEI) return;
     await chain.pay(keeper, address, FUND_WEI);
     log({ event: "angler-funded", address });
+    for (let i = 0; i < FUND_CHECKS; i++) {
+      if ((await chain.publicClient.getBalance({ address })) >= FUND_FLOOR_WEI) return;
+      await new Promise((resolve) => setTimeout(resolve, FUND_CHECK_MS));
+    }
   }
 
   async function turn(index: number) {

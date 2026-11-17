@@ -9,13 +9,16 @@
   <meta property="og:title" content="Nephelimna">
   <meta property="og:description" content="A 3D fishing game on a sea nobody can see into, encrypted with Zama FHEVM on Sepolia.">
   <meta property="og:image" content="/site/hero.webp">
-  <link rel="preload" as="image" href="/site/hero.webp" media="(min-width: 801px)">
+  <link rel="preload" as="image" href="/site/hero.webp">
+  <link rel="icon" href="/site/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/site/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/site/apple-touch-icon.png">
   <link rel="stylesheet" href="/site/site.css">
 </head>
 <body>
   <header class="top" id="top">
     <div class="wrap">
-      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>Nephelimna</a>
+      <a class="brand" href="/"><img class="brand-logo" src="/site/logo.svg" alt="" width="34" height="34">Nephelimna</a>
       <nav class="links" aria-label="Main">
         <a href="#sealed">What is sealed</a>
         <a href="#cast">A cast</a>
@@ -28,10 +31,10 @@
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
-      <picture>
-        <source srcset="/site/hero-small.webp" media="(max-width: 800px)">
-        <img src="/site/hero.webp" alt="A small fishing boat on clear turquoise water with sea grass below and a pale blue sky" width="1600" height="900" fetchpriority="high">
-      </picture>
+      <video class="hero-media" id="hero-video" autoplay muted loop playsinline preload="auto" poster="/site/hero.webp" aria-label="A small fishing boat rocking on clear water beside a stilt hut at the port">
+        <source src="/site/hero.webm" type="video/webm">
+        <source src="/site/hero.mp4" type="video/mp4">
+      </video>
       <div class="caustics" aria-hidden="true"></div>
       <div class="bubbles" id="bubbles" aria-hidden="true"></div>
       <div class="wrap">
@@ -129,24 +132,26 @@
             <p>Take the helm, find a square on the chart, drop anchor and fish. Waves, light and sea grass run in WebGL2 on your phone or desktop.</p>
           </article>
           <article class="card c2 reveal">
-            <img src="/site/bite.webp" alt="Underwater view of a fish taking the bait on a hook" width="278" height="177" loading="lazy">
+            <img src="/site/bite.webp" alt="Underwater view of a fish taking the bait on a hook" width="960" height="720" loading="lazy">
             <span class="tag">Under the float</span>
             <h3>Watch it bite</h3>
             <p>A window under the water shows the fish come in, peck and take the bait the moment the float twitches.</p>
           </article>
           <article class="card c3 reveal">
-            <h3>Depth and bait</h3>
-            <p>Each fish lives at one depth and takes one kind of bait.</p>
+            <img src="/site/chest.webp" alt="Underwater view of a wooden chest lifted from the sand on a fishing line" width="960" height="720" loading="lazy">
+            <span class="tag">Sunken chests</span>
+            <h3>Depth, bait and loot</h3>
+            <p>Each fish lives at one depth and takes one kind of bait. Empty casts sometimes bring up a chest.</p>
             <div class="baits"><span><b>Worm</b>common, uncommon</span><span><b>Spoon</b>uncommon to mythic</span><span><b>Live fish</b>mythic only</span></div>
           </article>
           <article class="card c4 reveal">
-            <img src="/site/circling.webp" alt="Underwater view of dark fish circling a baited hook" width="278" height="177" loading="lazy">
+            <img src="/site/circling.webp" alt="Underwater view of dark fish circling a baited hook" width="960" height="720" loading="lazy">
             <span class="tag">Hidden nets</span>
             <h3>Set a trap nobody sees</h3>
             <p>Leave a net in a square for an hour. When a rival lands a small fish there, you score it three times.</p>
           </article>
           <article class="card c5 reveal">
-            <img src="/site/fight.webp" alt="Underwater view of a fish pulling hard on a red line" width="278" height="177" loading="lazy">
+            <img src="/site/fight.webp" alt="Underwater view of a big fish near the sand pulling hard on a red line" width="960" height="720" loading="lazy">
             <span class="tag">The Leviathan</span>
             <h3>One giant, somewhere</h3>
             <p>A sealed Leviathan hides at the bottom of one square. Live fish at the bottom there lands 100 points, then it moves.</p>

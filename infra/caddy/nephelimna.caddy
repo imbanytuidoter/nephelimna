@@ -47,5 +47,7 @@ nephelimna.imbanytui.xyz {
 	try_files {path} {path}.html {path}/index.html
 	@glb path *.glb
 	header @glb Content-Type model/gltf-binary
+	@webm path *.webm
+	header @webm Content-Type video/webm
 	file_server
 }

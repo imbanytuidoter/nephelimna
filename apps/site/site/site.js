@@ -180,6 +180,12 @@ async function refresh() {
   }
 }
 
+const video = $("hero-video");
+if (video && calm) {
+  video.removeAttribute("autoplay");
+  video.pause();
+}
+
 bubbles();
 chart();
 reveals();

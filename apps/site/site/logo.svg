@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nephelimna">
+  <defs>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d5d68"/>
+      <stop offset="0.52" stop-color="#0d3a44"/>
+      <stop offset="1" stop-color="#061217"/>
+    </linearGradient>
+    <clipPath id="disc"><circle cx="32" cy="32" r="29"/></clipPath>
+  </defs>
+  <circle cx="32" cy="32" r="29" fill="url(#lake)"/>
+  <g clip-path="url(#disc)">
+    <path d="M6 33c4.3-3.2 8.7-3.2 13 0s8.7 3.2 13 0 8.7-3.2 13 0 8.7 3.2 13 0v31H6z" fill="#0a2a31"/>
+    <path d="M6 33c4.3-3.2 8.7-3.2 13 0s8.7 3.2 13 0 8.7-3.2 13 0 8.7 3.2 13 0" fill="none" stroke="#2fb3b3" stroke-width="2" stroke-linecap="round"/>
+    <path d="M13 19h22M27 25h21" stroke="#bff3ef" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <path d="M10 13h14" stroke="#bff3ef" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+  </g>
+  <path d="M38 6v34a8 8 0 0 1-16 0v-6l4.6 4.2" fill="none" stroke="#f0c37a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="38" cy="6.5" r="2.2" fill="none" stroke="#f0c37a" stroke-width="1.6"/>
+  <circle cx="32" cy="32" r="29" fill="none" stroke="#bff3ef" stroke-opacity="0.22" stroke-width="1.5"/>
+</svg>
