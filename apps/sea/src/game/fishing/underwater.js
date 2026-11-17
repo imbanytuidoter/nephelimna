@@ -32,7 +32,9 @@ const FLOOR_BELOW = [3.2, 1.4, 0.42];
 const FOG = [0.4, 0.37, 0.34];
 const CAUSTIC = [0.25, 0.35, 0.55];
 const SHADOWS = 3;
-const MOTES = 140;
+const BUBBLES = 46;
+const RISE = 0.22;
+const RADIUS = 16;
 const KELP = 7;
 const RAYS = 5;
 const LINE_PHASES = new Set(["waiting", "take", "fight", "landed", "lost", "retrieving"]);
@@ -178,12 +180,63 @@ function lightShafts(clock) {
   return mesh;
 }
 
-function motes() {
-  const positions = new Float32Array(MOTES * 3);
-  for (let i = 0; i < MOTES; i++) positions.set([Math.sin(i * 12.9898) * 2.6, Math.sin(i * 78.233) * 2.2, -Math.abs(Math.sin(i * 39.42)) * 3 + 0.8], i * 3);
+function bubbles() {
+  const positions = new Float32Array(BUBBLES * 3);
+  const sizes = new Float32Array(BUBBLES);
+  for (let i = 0; i < BUBBLES; i++) {
+    positions.set([Math.sin(i * 12.9898) * 2.4, Math.sin(i * 78.233) * 2.2, -Math.abs(Math.sin(i * 39.42)) * 2.6 + 0.6], i * 3);
+    sizes[i] = 0.5 + Math.abs(Math.sin(i * 17.31)) * 0.5;
+  }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  return new THREE.Points(geometry, new THREE.PointsMaterial({ color: PALETTE.glow, size: 0.018, transparent: true, opacity: 0.55, depthWrite: false }));
+  geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: { uGlow: { value: PALETTE.glow.clone() }, uScale: { value: 1 } },
+    vertexShader: `attribute float size; uniform float uScale; varying float vFade;
+      void main() {
+        vec4 view = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * view;
+        gl_PointSize = max(1.5, size * uScale * 0.05 / -view.z);
+        vFade = clamp(1.4 - (-view.z) * 0.35, 0.0, 1.0);
+      }`,
+    fragmentShader: `uniform vec3 uGlow; varying float vFade;
+      void main() {
+        vec2 p = gl_PointCoord * 2.0 - 1.0;
+        float r = length(p);
+        if (r > 1.0) discard;
+        float rim = smoothstep(0.55, 0.92, r) * (1.0 - smoothstep(0.92, 1.0, r));
+        float shine = 1.0 - smoothstep(0.0, 0.32, length(p - vec2(-0.35, 0.35)));
+        gl_FragColor = vec4(uGlow, (rim * 0.55 + shine * 0.7 + 0.05) * vFade);
+        #include <colorspace_fragment>
+      }`,
+  });
+  return new THREE.Points(geometry, material);
+}
+
+function frameMaterial(texture) {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: { uScene: { value: texture }, uSize: { value: new THREE.Vector2(1, 1) }, uRadius: { value: 16 }, uRim: { value: PALETTE.glow.clone() } },
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: `uniform sampler2D uScene; uniform vec2 uSize; uniform float uRadius; uniform vec3 uRim; varying vec2 vUv;
+      float box(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+      void main() {
+        vec2 p = (vUv - 0.5) * uSize;
+        float d = box(p, uSize * 0.5, uRadius);
+        float inside = 1.0 - smoothstep(-1.0, 0.5, d);
+        vec3 c = texture2D(uScene, vUv).rgb;
+        float vignette = smoothstep(0.85, 0.25, length((vUv - 0.5) * vec2(1.0, 1.15)));
+        c *= 0.62 + 0.38 * vignette;
+        float rim = 1.0 - smoothstep(0.0, 2.0, abs(d + 1.5));
+        c = mix(c, uRim, rim * 0.45);
+        gl_FragColor = vec4(c, inside);
+        #include <colorspace_fragment>
+      }`,
+  });
 }
 
 function wormCurve() {
@@ -223,7 +276,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   const floor = seabed(clock, causticStrength);
   const kelp = kelpBed(clock);
   const rays = lightShafts(clock);
-  const specks = motes();
+  const specks = bubbles();
   scene.add(sky, surface, floor, kelp, rays, specks);
   scene.add(new THREE.HemisphereLight(PALETTE.sky, PALETTE.ground, 2.2));
   const sun = new THREE.DirectionalLight(PALETTE.glow, 1.4);
@@ -282,14 +335,19 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
     (error) => console.error("underwater fish model failed to load", error),
   );
 
-  const shadows = shadowMeshes.map((mesh, i) => ({ mesh, angle: (i / SHADOWS) * Math.PI * 2, radius: 0.55 + i * 0.22, speed: 0.45 + i * 0.13, dart: 0, y: -0.15 + i * 0.12 }));
+  const shadows = shadowMeshes.map((mesh, i) => ({ mesh, angle: (i / SHADOWS) * Math.PI * 2, radius: 0.55 + i * 0.22, speed: 0.45 + i * 0.13, y: -0.25 + i * 0.14 }));
   const facing = new THREE.Vector3();
   const mouth = new THREE.Vector3();
   const top = new THREE.Vector3();
   const spot = new THREE.Vector3();
   const rect = { x: 0, y: 0, w: 0, h: 0 };
+  const target = new THREE.WebGLRenderTarget(1, 1, { samples: 4 });
+  const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), frameMaterial(target.texture));
+  composite.frustumCulled = false;
+  const flat = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   let shown = false;
   let jiggle = 0;
+  let peck = 0;
   let fish = null;
   let away = 0;
   let lastText = "";
@@ -315,24 +373,23 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   };
 
   const describe = (rod) => {
-    if (rod.pending) return "Something is circling your bait";
-    if (rod.phase === "take") return "It bites!";
+    if (rod.pending) return "Zama is opening your square";
+    if (rod.phase === "take") return "It took the bait. Strike now!";
     if (rod.phase === "fight") return rod.fight && PULLING.has(rod.fight.mode) ? "It pulls hard" : "Reel it in";
     if (rod.phase === "landed") return "Landed";
     if (rod.phase === "waiting" && rod.catch) return "A fish is coming";
     return "Under your float";
   };
 
-  const stepShadows = (dt, pending, hookPos) => {
+  const stepShadows = (dt, pending, hookPos, t) => {
     for (const shadow of shadows) {
       shadow.angle += dt * shadow.speed * (pending ? 1 : 2.2);
-      shadow.dart = Math.max(0, shadow.dart - dt * 1.4);
-      const pull = Math.sin(shadow.dart * Math.PI);
-      const reach = shadow.radius * (1 + away * 2.5) * (1 - pull * 0.8);
+      const reach = shadow.radius * (1 + away * 2.5);
       const x = hookPos.x + Math.cos(shadow.angle) * reach;
-      const z = -0.6 + Math.sin(shadow.angle) * reach * 0.8;
+      const z = -0.7 + Math.sin(shadow.angle) * reach * 0.8;
+      const heading = Math.atan2(-Math.cos(shadow.angle) * 0.8, -Math.sin(shadow.angle));
       shadow.mesh.visible = !fish;
-      place(shadow.mesh, spot.set(x, hookPos.y + shadow.y, z), -shadow.angle - Math.PI / 2 + (pull > 0.1 ? -Math.PI / 2 : 0), 0.5);
+      place(shadow.mesh, spot.set(x, hookPos.y + shadow.y + Math.sin(t * 0.7 + shadow.angle) * 0.04, z), heading, 0.42, Math.sin(t * 1.3 + shadow.radius) * 0.08);
     }
   };
 
@@ -354,10 +411,12 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       setDepth(depth);
       for (const event of events) {
         if (event !== "nibble") continue;
-        jiggle = 0.6;
-        shadows[Math.floor((t * 7) % SHADOWS)].dart = 1;
+        if (!fish) continue;
+        jiggle = 0.45;
+        peck = 1;
       }
       jiggle = Math.max(0, jiggle - dt);
+      peck = Math.max(0, peck - dt * 3);
       if (rod.catch && !fish) fish = { rarity: rod.catch.species.rarity, from: Math.sin(t * 3.7) > 0 ? 1 : -1 };
       if (!rod.catch && !rod.pending && rod.phase !== "landed") away = Math.min(1, away + dt);
       const shake = reducedMotion ? 0 : 1;
@@ -385,14 +444,17 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
         const pos = mouth.copy(hookPos);
         swim.value = 1;
         if (rod.phase === "waiting") {
-          const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait)));
-          pos.x = lerp(hookPos.x + fish.from * 2.4, hookPos.x + fish.from * length * 0.5, near);
-          pos.y = lerp(hookPos.y - 0.5, hookPos.y, near) + Math.sin(t * 2) * 0.02;
-          pos.z = lerp(-1.2, 0, near);
-          swim.value = 1.4 - near * 0.8;
+          const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait - rod.nibbles * 0.85 + 0.6)));
+          const gap = lerp(2.4, 0.1, near) - Math.sin(peck * Math.PI) * 0.09;
+          pos.x = hookPos.x + fish.from * (length * 0.5 + gap);
+          pos.y = hookPos.y + lerp(-0.45, -0.01, near) + Math.sin(t * 2) * 0.012;
+          pos.z = lerp(-1.1, 0, near);
+          pitch = lerp(-0.25, 0, near) * dir;
+          swim.value = 1.4 - near * 0.9 + peck;
         } else if (rod.phase === "take") {
-          pos.x = hookPos.x + fish.from * length * 0.45;
-          roll = Math.sin(t * 22) * 0.2 * shake;
+          pos.x = hookPos.x + fish.from * length * 0.47;
+          pos.y = hookPos.y - Math.min(0.12, rod.time * 0.4);
+          roll = Math.sin(t * 22) * 0.12 * shake;
           swim.value = 2;
         } else if (rod.phase === "fight" && rod.fight) {
           const pulling = PULLING.has(rod.fight.mode);
@@ -421,7 +483,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
         if (hooked) hookPos.copy(pos).addScaledVector(facing, isChest ? 0.18 : length * 0.48);
       }
       shadowSwim.value = rod.pending ? 1.2 : 2.2;
-      stepShadows(dt, rod.pending, hookPos);
+      stepShadows(dt, rod.pending, hookPos, t);
 
       hook.position.copy(hookPos);
       hook.visible = !(fish && fish.rarity === "chest" && rod.phase !== "waiting");
@@ -433,10 +495,10 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
 
       const pos = specks.geometry.attributes.position;
       for (let i = 0; i < pos.count; i++) {
-        let y = pos.getY(i) + dt * 0.03;
-        if (y > 2.2) y = -2.2;
+        let y = pos.getY(i) + dt * RISE * (0.6 + (i % 5) * 0.12);
+        if (y > SURFACE_ABOVE[depth]) y = -FLOOR_BELOW[depth];
         pos.setY(i, y);
-        pos.setX(i, pos.getX(i) + Math.sin(t * 0.5 + i) * dt * 0.01);
+        pos.setX(i, pos.getX(i) + Math.sin(t * 2.2 + i) * dt * 0.05);
       }
       pos.needsUpdate = true;
       sky.material.uniforms.uTime.value = t;
@@ -456,23 +518,29 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       const box = frame.getBoundingClientRect();
       const host = canvas.getBoundingClientRect();
       if (!box.width || !host.width) return;
-      const scale = canvas.width / host.width / renderer.getPixelRatio();
+      const ratio = renderer.getPixelRatio();
+      const scale = canvas.width / host.width / ratio;
       rect.x = (box.left - host.left) * scale;
       rect.y = (host.bottom - box.bottom) * scale;
       rect.w = box.width * scale;
       rect.h = box.height * scale;
+      const width = Math.round(rect.w * ratio);
+      const height = Math.round(rect.h * ratio);
+      if (target.width !== width || target.height !== height) target.setSize(width, height);
       camera.aspect = box.width / box.height;
       camera.updateProjectionMatrix();
+      specks.material.uniforms.uScale.value = height;
+      composite.material.uniforms.uSize.value.set(width, height);
+      composite.material.uniforms.uRadius.value = RADIUS * ratio * scale;
       const autoClear = renderer.autoClear;
-      renderer.setRenderTarget(null);
-      renderer.setViewport(rect.x, rect.y, rect.w, rect.h);
-      renderer.setScissor(rect.x, rect.y, rect.w, rect.h);
-      renderer.setScissorTest(true);
-      renderer.autoClear = false;
-      renderer.clear(true, true, false);
+      renderer.autoClear = true;
+      renderer.setRenderTarget(target);
       renderer.render(scene, camera);
-      renderer.setScissorTest(false);
-      renderer.setViewport(0, 0, canvas.width / renderer.getPixelRatio(), canvas.height / renderer.getPixelRatio());
+      renderer.setRenderTarget(null);
+      renderer.autoClear = false;
+      renderer.setViewport(rect.x, rect.y, rect.w, rect.h);
+      renderer.render(composite, flat);
+      renderer.setViewport(0, 0, canvas.width / ratio, canvas.height / ratio);
       renderer.autoClear = autoClear;
     },
   };

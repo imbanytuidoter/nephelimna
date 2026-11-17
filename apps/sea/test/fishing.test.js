@@ -412,6 +412,26 @@ describe("sealed casts", () => {
     expect(rod.phase).toBe("retrieving");
   });
 
+  test("a sealed catch keeps coming back after missed strikes, because the chain already counted it", () => {
+    const answer = { caught: true, shoal: false, species: { name: "x", fight: { strength: 1, stamina: 1, runs: 1 } } };
+    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => answer, leave: () => null };
+    let { rod } = flyTo(world);
+    ({ rod } = stepRod(rod, 0.016, { held: false, pressed: false }, world));
+    expect(rod.sealed).toBe(true);
+    let takes = 0;
+    let missed = 0;
+    for (let i = 0; i < 4000 && takes < 4; i++) {
+      const step = stepRod(rod, 0.016, { held: false, pressed: false }, world);
+      takes += step.events.filter((event) => event === "take").length;
+      missed += step.events.filter((event) => event === "missed").length;
+      rod = step.rod;
+    }
+    expect(takes).toBe(4);
+    expect(missed).toBe(0);
+    while (rod.phase !== "take") rod = stepRod(rod, 0.016, { held: false, pressed: false }, world).rod;
+    expect(stepRod(rod, 0.016, { held: true, pressed: true }, world).events).toEqual(["hooked"]);
+  });
+
   test("an empty, netted or failed answer reels the line in with its own message", () => {
     for (const event of ["empty", "snagged", "chain-failed"]) {
       const world = { ...base, resolve: () => ({ pending: true }), verdict: () => ({ caught: false, event }) };

@@ -13,14 +13,14 @@ export const ROD = {
   emptyWait: 6,
   nibbleGap: 0.85,
   nibbleTime: 0.3,
-  takeMin: 0.9,
-  takeMax: 1.3,
+  takeMin: 1.5,
+  takeMax: 2,
   spook: 1.35,
   holdToRetrieve: 0.6,
   retrieve: 1.1,
   landedTime: 1.4,
   lostTime: 0.9,
-  sealedHold: 25,
+  sealedHold: 45,
   sealedNibbleFirst: 2.2,
   sealedNibbleGap: 1.6,
   sealedNibbleSpread: 3,
@@ -35,7 +35,7 @@ export function flightTime(distance) {
 }
 
 export function createRod() {
-  return { phase: "idle", time: 0, charge: 0, distance: 0, wait: 0, nibbles: 0, nibbleAt: 0, window: 0, hold: 0, pending: false, spooked: false, slide: false, catch: null, fight: null };
+  return { phase: "idle", time: 0, charge: 0, distance: 0, wait: 0, nibbles: 0, nibbleAt: 0, window: 0, hold: 0, pending: false, sealed: false, spooked: false, slide: false, catch: null, fight: null };
 }
 
 const to = (rod, phase, extra = {}) => ({ ...rod, phase, time: 0, hold: 0, ...extra });
@@ -52,7 +52,7 @@ export function stepRod(rod, dt, input, world) {
   const one = (next, event) => ({ rod: next, events: event ? [event] : [] });
   switch (rod.phase) {
     case "idle":
-      if (input.pressed && world.canFish) return one(to(rod, "charging", { charge: 0, catch: null, fight: null }), "draw");
+      if (input.pressed && world.canFish) return one(to(rod, "charging", { charge: 0, catch: null, fight: null, sealed: false }), "draw");
       return one(rod, input.pressed ? "moving" : null);
     case "charging": {
       const charge = Math.min(1, time / ROD.chargeTime);
@@ -83,7 +83,7 @@ export function stepRod(rod, dt, input, world) {
           return one({ ...rod, time, hold, nibbleAt }, nibbled ? "nibble" : null);
         }
         if (!verdict.caught) return one(to(rod, "retrieving", { catch: null, pending: false }), verdict.event);
-        return one(plan({ ...rod, pending: false }, verdict, world.random, false), "answered");
+        return one(plan({ ...rod, pending: false, sealed: true }, verdict, world.random, false), "answered");
       }
       const hold = input.held ? rod.hold + dt : 0;
       if (hold >= ROD.holdToRetrieve) return one(to(rod, "retrieving", { catch: null }), "reeled");
@@ -100,7 +100,7 @@ export function stepRod(rod, dt, input, world) {
       if (!world.canFish) return one(to(rod, "retrieving", { catch: null }), "reeled");
       if (input.pressed) return one(to(rod, "fight", { fight: startFight(rod.catch.species, rod.distance, world.random) }), "hooked");
       if (time > rod.window) {
-        if (rod.spooked) return one(to(rod, "retrieving", { catch: null }), "missed");
+        if (rod.spooked && !rod.sealed) return one(to(rod, "retrieving", { catch: null }), "missed");
         return one(plan(rod, { ...rod.catch, shoal: false }, world.random, true), "spooked");
       }
       return one({ ...rod, time });
