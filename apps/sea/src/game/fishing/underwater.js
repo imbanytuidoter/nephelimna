@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { FIGHT_RULES } from "./fight.js";
 
 const PALETTE = {
   water: [new THREE.Color("#2b93a6"), new THREE.Color("#176475"), new THREE.Color("#0c4352")],
@@ -18,6 +19,7 @@ const PALETTE = {
   shade: new THREE.Color("#0a2a32"),
   chest: new THREE.Color("#6b4526"),
   band: new THREE.Color("#c9a24a"),
+  strain: new THREE.Color("#ff6a52"),
 };
 const TINT = {
   common: new THREE.Color(1, 1, 1),
@@ -35,6 +37,10 @@ const SHADOWS = 3;
 const BUBBLES = 46;
 const RISE = 0.22;
 const RADIUS = 16;
+const SETTLE = 9;
+const TURN = 6;
+const CHEST_HALF = 0.1;
+const CHEST_LIFT = 0.45;
 const KELP = 7;
 const RAYS = 5;
 const LINE_PHASES = new Set(["waiting", "take", "fight", "landed", "lost", "retrieving"]);
@@ -246,7 +252,7 @@ function wormCurve() {
 
 function chestMesh() {
   const group = new THREE.Group();
-  const wood = new THREE.MeshStandardMaterial({ color: PALETTE.chest, roughness: 0.9 });
+  const wood = new THREE.MeshStandardMaterial({ color: PALETTE.chest, roughness: 0.8, emissive: PALETTE.chest, emissiveIntensity: 0.45 });
   const metal = new THREE.MeshStandardMaterial({ color: PALETTE.band, roughness: 0.35, metalness: 0.8 });
   group.add(new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.22), wood));
   const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.36, 12, 1, false, 0, Math.PI).rotateZ(Math.PI / 2), wood);
@@ -340,6 +346,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   const mouth = new THREE.Vector3();
   const top = new THREE.Vector3();
   const spot = new THREE.Vector3();
+  const goal = new THREE.Vector3();
   const rect = { x: 0, y: 0, w: 0, h: 0 };
   const target = new THREE.WebGLRenderTarget(1, 1, { samples: 4 });
   const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), frameMaterial(target.texture));
@@ -372,9 +379,111 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
     mesh.scale.setScalar(length / MODEL_LENGTH);
   };
 
+  const progressOf = (rod) => {
+    if (!rod.fight) return 0;
+    fish.startLine ??= rod.fight.line;
+    const span = Math.max(0.5, fish.startLine - FIGHT_RULES.minLine);
+    return clamp01(1 - (rod.fight.line - FIGHT_RULES.minLine) / span);
+  };
+
+  const settle = (body, dt, yaw, roll, pitch, scale) => {
+    const k = 1 - Math.exp(-SETTLE * dt);
+    if (!fish.placed) {
+      fish.view.copy(goal);
+      fish.yaw = yaw;
+      fish.placed = true;
+    }
+    fish.view.lerp(goal, k);
+    const turn = Math.atan2(Math.sin(yaw - fish.yaw), Math.cos(yaw - fish.yaw));
+    fish.yaw += turn * (1 - Math.exp(-TURN * dt));
+    body.position.copy(fish.view);
+    body.rotation.set(roll, fish.yaw, pitch, "YXZ");
+    body.scale.setScalar(scale);
+  };
+
+  const stageChest = (dt, t, rod, depth, hookPos, shake) => {
+    const ground = -FLOOR_BELOW[depth] + CHEST_HALF;
+    const rest = hookPos.y - 0.55;
+    chest.visible = true;
+    let roll = 0;
+    goal.set(fish.from * 0.15, Math.max(ground, rest), -0.3);
+    if (rod.phase === "waiting") {
+      const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait)));
+      hookPos.lerp(spot.set(goal.x, goal.y + CHEST_HALF + 0.06, goal.z), near);
+    } else if (rod.phase === "take") {
+      roll = Math.sin(t * 18) * 0.06 * shake;
+    } else if (rod.phase === "fight" && rod.fight) {
+      const lift = progressOf(rod);
+      goal.y = lerp(Math.max(ground, rest), hookPos.y + CHEST_LIFT, lift);
+      goal.z = lerp(-0.3, 0.1, lift);
+      goal.x += Math.sin(t * 1.7) * 0.06 * shake;
+      roll = Math.sin(t * 1.7 + 0.6) * (0.12 + 0.2 * clamp01(rod.fight.tension)) * shake;
+    } else if (rod.phase === "landed") {
+      goal.y = hookPos.y + clamp01(rod.time) * (SURFACE_ABOVE[depth] + 0.8);
+    } else {
+      goal.y = Math.max(ground, rest);
+    }
+    settle(chest, dt, 0, roll, 0, 1);
+    if (rod.phase !== "waiting") hookPos.copy(fish.view).add(spot.set(0, CHEST_HALF + 0.06, 0));
+  };
+
+  const stageCatch = (dt, t, rod, depth, hookPos, shake) => {
+    if (fish.rarity === "chest") return stageChest(dt, t, rod, depth, hookPos, shake);
+    const length = LENGTH[fish.rarity] ?? LENGTH.common;
+    fishSkin.color.copy(TINT[fish.rarity] ?? TINT.common);
+    actor.visible = true;
+    let dir = -fish.from;
+    let roll = 0;
+    let pitch = 0;
+    goal.copy(hookPos);
+    swim.value = 1;
+    if (rod.phase === "waiting") {
+      const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait - rod.nibbles * 0.85 + 0.6)));
+      const gap = lerp(2.4, 0.1, near) - Math.sin(peck * Math.PI) * 0.09;
+      goal.x = hookPos.x + fish.from * (length * 0.5 + gap);
+      goal.y = hookPos.y + lerp(-0.45, -0.01, near) + Math.sin(t * 2) * 0.012;
+      goal.z = lerp(-1.1, 0, near);
+      pitch = lerp(-0.25, 0, near) * dir;
+      swim.value = 1.4 - near * 0.9 + peck;
+    } else if (rod.phase === "take") {
+      goal.x = hookPos.x + fish.from * length * 0.47;
+      goal.y = hookPos.y - Math.min(0.12, rod.time * 0.4);
+      roll = Math.sin(t * 22) * 0.12 * shake;
+      swim.value = 2;
+    } else if (rod.phase === "fight" && rod.fight) {
+      const pulling = PULLING.has(rod.fight.mode);
+      const tension = clamp01(rod.fight.tension ?? 0);
+      const near = progressOf(rod);
+      const side = Math.sin(rod.fight.bearing ?? 0) >= 0 ? 1 : -1;
+      dir = pulling ? side : -side * 0.6;
+      goal.x = side * lerp(0.75, 0.25, near) + Math.sin(t * (pulling ? 17 : 6)) * (0.015 + 0.04 * tension) * shake;
+      goal.y = lerp(-0.55, 0.05, near) + Math.sin(t * 3) * 0.05 * shake;
+      goal.z = lerp(-1.3, 0.1, near) - (pulling ? 0.25 : 0);
+      roll = Math.sin(t * (pulling ? 15 : 5)) * (0.12 + 0.3 * tension) * shake;
+      pitch = (pulling ? -0.15 : 0.25) * Math.sign(dir || 1);
+      swim.value = pulling ? 2.6 : 0.9;
+    } else if (rod.phase === "landed") {
+      goal.y = hookPos.y + clamp01(rod.time) * (SURFACE_ABOVE[depth] + 0.8);
+      pitch = 1.1 * Math.sign(dir);
+      swim.value = 2.2;
+    } else {
+      dir = fish.from;
+      goal.x = hookPos.x + fish.from * (0.4 + rod.time * 2);
+      goal.z = -rod.time;
+      swim.value = 2;
+    }
+    const yaw = dir > 0 ? 0 : Math.PI;
+    settle(actor, dt, yaw, roll, pitch, length / MODEL_LENGTH);
+    const hooked = rod.phase === "take" || rod.phase === "fight" || rod.phase === "landed";
+    if (hooked) hookPos.copy(fish.view).add(facing.set(Math.cos(fish.yaw), 0, -Math.sin(fish.yaw)).multiplyScalar(length * 0.48));
+  };
+
   const describe = (rod) => {
     if (rod.pending) return "Zama is opening your square";
-    if (rod.phase === "take") return "It took the bait. Strike now!";
+    const heavy = rod.catch?.species?.rarity === "chest";
+    if (rod.phase === "take") return heavy ? "Something caught your hook. Strike now!" : "It took the bait. Strike now!";
+    if (heavy && rod.phase === "fight") return "Heavy. Keep reeling";
+    if (heavy && rod.phase === "waiting") return "Something heavy lies here";
     if (rod.phase === "fight") return rod.fight && PULLING.has(rod.fight.mode) ? "It pulls hard" : "Reel it in";
     if (rod.phase === "landed") return "Landed";
     if (rod.phase === "waiting" && rod.catch) return "A fish is coming";
@@ -417,7 +526,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       }
       jiggle = Math.max(0, jiggle - dt);
       peck = Math.max(0, peck - dt * 3);
-      if (rod.catch && !fish) fish = { rarity: rod.catch.species.rarity, from: Math.sin(t * 3.7) > 0 ? 1 : -1 };
+      if (rod.catch && !fish) fish = { rarity: rod.catch.species.rarity, from: Math.sin(t * 3.7) > 0 ? 1 : -1, view: new THREE.Vector3(), yaw: 0, placed: false, startLine: null };
       if (!rod.catch && !rod.pending && rod.phase !== "landed") away = Math.min(1, away + dt);
       const shake = reducedMotion ? 0 : 1;
 
@@ -430,67 +539,20 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
 
       actor.visible = false;
       chest.visible = false;
-      if (fish) {
-        const length = LENGTH[fish.rarity] ?? LENGTH.common;
-        const isChest = fish.rarity === "chest";
-        const body = isChest ? chest : actor;
-        if (!isChest) {
-          fishSkin.color.copy(TINT[fish.rarity] ?? TINT.common);
-          actor.visible = true;
-        } else chest.visible = true;
-        let dir = -fish.from;
-        let roll = 0;
-        let pitch = 0;
-        const pos = mouth.copy(hookPos);
-        swim.value = 1;
-        if (rod.phase === "waiting") {
-          const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait - rod.nibbles * 0.85 + 0.6)));
-          const gap = lerp(2.4, 0.1, near) - Math.sin(peck * Math.PI) * 0.09;
-          pos.x = hookPos.x + fish.from * (length * 0.5 + gap);
-          pos.y = hookPos.y + lerp(-0.45, -0.01, near) + Math.sin(t * 2) * 0.012;
-          pos.z = lerp(-1.1, 0, near);
-          pitch = lerp(-0.25, 0, near) * dir;
-          swim.value = 1.4 - near * 0.9 + peck;
-        } else if (rod.phase === "take") {
-          pos.x = hookPos.x + fish.from * length * 0.47;
-          pos.y = hookPos.y - Math.min(0.12, rod.time * 0.4);
-          roll = Math.sin(t * 22) * 0.12 * shake;
-          swim.value = 2;
-        } else if (rod.phase === "fight" && rod.fight) {
-          const pulling = PULLING.has(rod.fight.mode);
-          const side = Math.sin(rod.fight.bearing ?? 0) >= 0 ? 1 : -1;
-          const tension = clamp01(rod.fight.tension ?? 0);
-          dir = pulling ? side : -side;
-          pos.x = hookPos.x + side * length * (pulling ? 0.9 : 0.5) + Math.sin(t * (pulling ? 17 : 6)) * (0.02 + 0.05 * tension) * shake;
-          pos.y = hookPos.y - 0.1 + Math.sin(t * 8) * 0.04 * shake;
-          pos.z = -length * 0.3;
-          roll = Math.sin(t * (pulling ? 15 : 5)) * (0.15 + 0.35 * tension) * shake;
-          swim.value = pulling ? 2.4 : 0.8;
-        } else if (rod.phase === "landed") {
-          pos.y = hookPos.y + clamp01(rod.time) * (SURFACE_ABOVE[depth] + 0.8);
-          pitch = 1.1 * dir;
-          swim.value = 2.2;
-        } else {
-          dir = fish.from;
-          pos.x = hookPos.x + fish.from * (0.4 + rod.time * 2);
-          pos.z = -rod.time;
-          swim.value = 2;
-        }
-        facing.set(dir, 0, 0);
-        const hooked = rod.phase === "take" || rod.phase === "fight" || rod.phase === "landed";
-        place(body, pos, dir > 0 ? 0 : Math.PI, isChest ? 1 : length, roll, isChest ? 0 : pitch);
-        if (isChest) body.scale.setScalar(1);
-        if (hooked) hookPos.copy(pos).addScaledVector(facing, isChest ? 0.18 : length * 0.48);
-      }
+      if (fish) stageCatch(dt, t, rod, depth, hookPos, shake);
       shadowSwim.value = rod.pending ? 1.2 : 2.2;
       stepShadows(dt, rod.pending, hookPos, t);
 
       hook.position.copy(hookPos);
-      hook.visible = !(fish && fish.rarity === "chest" && rod.phase !== "waiting");
-      const lineTop = mouth.set(rod.phase === "fight" ? 0 : hookPos.x * 0.4, SURFACE_ABOVE[depth] + 0.2, 0);
+      const fighting = rod.phase === "fight" && rod.fight;
+      const strain = fighting ? clamp01((rod.fight.tension - 0.45) / 0.5) : 0;
+      lineMaterial.color.copy(PALETTE.line).lerp(PALETTE.strain, strain);
+      lineMaterial.opacity = fighting ? 1 : 0.8;
+      const lineTop = mouth.set(fighting ? hookPos.x * 0.15 : hookPos.x * 0.4, SURFACE_ABOVE[depth] + 0.2, 0);
       line.position.copy(hookPos);
       const span = lineTop.sub(hookPos);
-      line.scale.set(1, span.length(), 1);
+      const thick = fighting ? 1.8 + strain : 1;
+      line.scale.set(thick, span.length(), thick);
       line.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, span.normalize());
 
       const pos = specks.geometry.attributes.position;
@@ -504,7 +566,8 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       sky.material.uniforms.uTime.value = t;
 
       camera.position.set(Math.sin(t * 0.21) * 0.08, 0.12 + Math.sin(t * 0.33) * 0.04, 1.75);
-      camera.lookAt(hookPos.x * 0.35, hookPos.y * 0.5 - 0.05, -0.2);
+      const focus = fish?.placed ? spot.copy(hookPos).lerp(fish.view, 0.5) : spot.copy(hookPos);
+      camera.lookAt(focus.x * 0.4, focus.y * 0.6 - 0.05, focus.z * 0.5 - 0.2);
 
       const text = describe(rod);
       if (text !== lastText) {
