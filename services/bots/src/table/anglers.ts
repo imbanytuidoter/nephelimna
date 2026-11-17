@@ -13,6 +13,7 @@ const FUND_CHECK_MS = 3000;
 const POST_AFTER = [6, 12] as const;
 const FIRST_POST = 2;
 const CAST_GAP_S = [150, 330] as const;
+const WAKE_CAST_S = [15, 90] as const;
 const FISH_FOR_S = [360, 840] as const;
 const SAIL_SPEED = 6;
 const ARRIVE_M = 8;
@@ -104,6 +105,12 @@ export function stepBoat(boat: Boat, dt: number, now: number, random: Random): B
   return { ...boat, x: boat.x + (dx / left) * move, z: boat.z + (dz / left) * move, yaw: Math.atan2(-dz, dx) };
 }
 
+/** A person who just arrived should see the fleet fishing within a minute, not sailing for several before the first cast. */
+export function wake(boat: Boat, now: number, random: Random): Boat {
+  if (boat.sailing) return boat;
+  return { ...boat, fishUntil: Math.max(boat.fishUntil, now + between(...FISH_FOR_S, random()) * 1000), castAt: now + between(...WAKE_CAST_S, random()) * 1000 };
+}
+
 function firstBoat(index: number, random: Random): Boat {
   const angle = (index / STYLES.length) * Math.PI * 2 + random() * 0.4;
   const radius = between(OPEN_WATER_FROM + 100, OPEN_WATER_TO - 100, random());
@@ -153,6 +160,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
   const ownIds = new Set(boatIds);
   const retired = loadRetired(file.replace(/\.json$/, ".retired.json"));
   let busy = false;
+  let alone = true;
   let lastStep = Date.now();
   let lastSave = 0;
 
@@ -223,7 +231,14 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
       const now = Date.now();
       const dt = Math.min(5, (now - lastStep) / 1000);
       lastStep = now;
-      if (!peopleOnline(now)) return;
+      if (!peopleOnline(now)) {
+        alone = true;
+        return;
+      }
+      if (alone) {
+        alone = false;
+        bots = bots.map((bot) => ({ ...bot, boat: wake(bot.boat!, now, random) }));
+      }
       bots = bots.map((bot) => ({ ...bot, boat: stepBoat(bot.boat!, dt, now, random) }));
       show(now);
       maybeCast(now);

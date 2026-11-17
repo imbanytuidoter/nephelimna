@@ -57,3 +57,13 @@ describe("AI angler strength", () => {
     for (const style of STYLES) for (const [, bait] of style.choices) expect(bait).not.toBe(2);
   });
 });
+
+describe("waking the fleet", () => {
+  test("an anchored boat casts within a minute and a half of a person arriving", async () => {
+    const { wake } = await import("../src/table/anglers.js");
+    const now = 5_000_000;
+    const boat = wake({ x: 900, z: 0, yaw: 0, sailing: false, tx: 900, tz: 0, fishUntil: 0, castAt: 0 }, now, () => 0.5);
+    expect(boat.castAt - now).toBeLessThanOrEqual(90_000);
+    expect(boat.fishUntil).toBeGreaterThan(boat.castAt);
+  });
+});
