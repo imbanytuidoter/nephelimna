@@ -48,6 +48,6 @@ nephelimna.imbanytui.xyz {
 	@glb path *.glb
 	header @glb Content-Type model/gltf-binary
 	@webm path *.webm
-	header @webm Content-Type video/webm
+	header @webm >Content-Type video/webm
 	file_server
 }
