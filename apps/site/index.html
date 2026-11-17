@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nephelimna · fishing on a sealed sea</title>
+  <meta name="description" content="A 3D fishing game where every square of the sea is encrypted with Zama FHEVM. You cast blind, the contract decides what bites, and only you can read your catch.">
+  <meta name="theme-color" content="#061217">
+  <meta property="og:title" content="Nephelimna">
+  <meta property="og:description" content="A 3D fishing game on a sea nobody can see into, encrypted with Zama FHEVM on Sepolia.">
+  <meta property="og:image" content="/site/hero.webp">
+  <link rel="preload" as="image" href="/site/hero.webp" media="(min-width: 801px)">
+  <link rel="stylesheet" href="/site/site.css">
+</head>
+<body>
+  <header class="top" id="top">
+    <div class="wrap">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>Nephelimna</a>
+      <nav class="links" aria-label="Main">
+        <a href="#sealed">What is sealed</a>
+        <a href="#cast">A cast</a>
+        <a href="#board">Leaderboard</a>
+        <a href="/docs/">How to play</a>
+      </nav>
+      <a class="btn btn-main" href="/sea/">Play</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <picture>
+        <source srcset="/site/hero-small.webp" media="(max-width: 800px)">
+        <img src="/site/hero.webp" alt="A small fishing boat on clear turquoise water with sea grass below and a pale blue sky" width="1600" height="900" fetchpriority="high">
+      </picture>
+      <div class="wrap">
+        <p class="eyebrow">A 3D fishing game on Zama FHEVM</p>
+        <h1 id="hero-title">Fish a sea <em>nobody</em> can see into.</h1>
+        <p class="lead">Every square of the lake is encrypted on chain. You pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read your catch, and your score stays sealed until you choose to open it.</p>
+        <div class="cta">
+          <a class="btn btn-main" href="/sea/"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>Play in the browser</a>
+          <a class="btn btn-ghost" href="/docs/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg>How to play</a>
+        </div>
+        <ul class="facts">
+          <li>No wallet needed</li>
+          <li>Test ETH for your boat is free</li>
+          <li>Runs on Sepolia</li>
+          <li>Phone and desktop</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sealed" id="sealed" aria-labelledby="sealed-title">
+      <div class="wrap">
+        <div class="chart reveal" aria-hidden="true">
+          <div class="grid" id="grid"></div>
+          <div class="chart-tag a"><b>Your cast</b>square public, depth and bait sealed</div>
+          <div class="chart-tag b"><b>63 sealed squares</b>fish, stock and the Leviathan</div>
+        </div>
+        <div class="reveal">
+          <p class="eyebrow">What is sealed</p>
+          <h2 id="sealed-title">The lake is encrypted. So is your luck.</h2>
+          <ul class="points">
+            <li>
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+              <div><h3>Squares nobody can read</h3><p>Each of the 64 squares holds three depths of fish drawn from encrypted randomness on chain. Not the players, not the keeper, not our server knows what lives where.</p></div>
+            </li>
+            <li>
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg></span>
+              <div><h3>Choices encrypted in your browser</h3><p>Your depth and bait are sealed before they leave the page. The contract compares them with the square without ever seeing either, and pays the same gas for a miss and a catch.</p></div>
+            </li>
+            <li>
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span>
+              <div><h3>Scores opened with a proof</h3><p>Your total grows sealed. When you post it, Zama decrypts it with a proof that the contract checks before your name goes on the leaderboard.</p></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow" id="cast" aria-labelledby="cast-title">
+      <div class="wrap">
+        <div class="head reveal">
+          <p class="eyebrow">A cast, step by step</p>
+          <h2 id="cast-title">From your thumb to the chain and back.</h2>
+        </div>
+        <ol class="steps">
+          <li class="reveal"><h3>Seal the bait</h3><p>The game encrypts your depth and bait for this contract and your session key.</p><span class="time">in the browser</span></li>
+          <li class="reveal"><h3>Cast on Sepolia</h3><p>One transaction. The contract picks the layer, checks the bait and updates your total, all on encrypted values.</p><span class="time">about 10 to 20 s</span></li>
+          <li class="reveal"><h3>Read your catch</h3><p>Only your key may decrypt the result. A fish swims to your hook in the window under the water.</p><span class="time">about 5 to 40 s</span></li>
+          <li class="reveal"><h3>Strike and reel</h3><p>Hook it when it takes the bait and keep the line from snapping. Leave the line out and cast again if you like.</p><span class="time">your skill</span></li>
+        </ol>
+        <div class="ledger">
+          <div class="open reveal">
+            <h3><span class="dot"></span>Anyone can see</h3>
+            <ul><li>That you cast, and when</li><li>Which square you cast into</li><li>That you set a net, but not where</li><li>Your score, once you post it</li></ul>
+          </div>
+          <div class="shut reveal">
+            <h3><span class="dot"></span>Stays sealed</h3>
+            <ul><li>What lives in every square, at every depth</li><li>Your depth, your bait and what you caught</li><li>Where your hidden nets are, and whose net took a fish</li><li>Your total, until you open it</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="play" aria-labelledby="play-title">
+      <div class="wrap">
+        <div class="head reveal">
+          <p class="eyebrow">On the water</p>
+          <h2 id="play-title">A real fishing game, not a form.</h2>
+          <p class="lead">Sail a small boat around an island, anchor in a chart square and fish from the deck. Everything that decides the outcome happens under encryption.</p>
+        </div>
+        <div class="bento">
+          <article class="card c1 reveal">
+            <img src="/site/helm.webp" alt="The boat crossing a wave near a stilt hut, with sea grass under clear water" width="1200" height="675" loading="lazy">
+            <span class="tag">Open water</span>
+            <h3>Sail, anchor, cast</h3>
+            <p>Take the helm, find a square on the chart, drop anchor and fish. Waves, light and sea grass run in WebGL2 on your phone or desktop.</p>
+          </article>
+          <article class="card c2 reveal">
+            <img src="/site/bite.webp" alt="Underwater view of a fish taking the bait on a hook" width="278" height="177" loading="lazy">
+            <span class="tag">Under the float</span>
+            <h3>Watch it bite</h3>
+            <p>A window under the water shows the fish come in, peck and take the bait the moment the float twitches.</p>
+          </article>
+          <article class="card c3 reveal">
+            <h3>Depth and bait</h3>
+            <p>Each fish lives at one depth and takes one kind of bait.</p>
+            <div class="baits"><span><b>Worm</b>common, uncommon</span><span><b>Spoon</b>uncommon to mythic</span><span><b>Live fish</b>mythic only</span></div>
+          </article>
+          <article class="card c4 reveal">
+            <img src="/site/circling.webp" alt="Underwater view of dark fish circling a baited hook" width="278" height="177" loading="lazy">
+            <span class="tag">Hidden nets</span>
+            <h3>Set a trap nobody sees</h3>
+            <p>Leave a net in a square for an hour. When a rival lands a small fish there, you score it three times.</p>
+          </article>
+          <article class="card c5 reveal">
+            <img src="/site/fight.webp" alt="Underwater view of a fish pulling hard on a red line" width="278" height="177" loading="lazy">
+            <span class="tag">The Leviathan</span>
+            <h3>One giant, somewhere</h3>
+            <p>A sealed Leviathan hides at the bottom of one square. Live fish at the bottom there lands 100 points, then it moves.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="board" aria-labelledby="board-title">
+      <div class="wrap board-wrap">
+        <div class="reveal">
+          <p class="eyebrow">Leaderboard</p>
+          <h2 id="board-title">Proven scores only.</h2>
+          <p class="lead" style="margin-top: 16px">A score shows here only after the contract checked a Zama decryption proof for it. Every row links to that transaction.</p>
+          <div class="stats">
+            <div><b id="stat-anglers">0</b><span>Anglers</span></div>
+            <div><b id="stat-casts">0</b><span>Sealed casts</span></div>
+            <div><b id="stat-posted">0</b><span>Posted</span></div>
+          </div>
+        </div>
+        <div class="board reveal">
+          <table>
+            <thead><tr><th scope="col">#</th><th scope="col">Angler</th><th scope="col">Score</th></tr></thead>
+            <tbody id="board-rows"><tr class="empty"><td colspan="3">Reading the board from the chain</td></tr></tbody>
+          </table>
+          <p class="board-note">Live from the sealed sea on Sepolia.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title">
+      <div class="wrap reveal">
+        <p class="eyebrow">Ready</p>
+        <h2 id="closing-title">Your boat gets test ETH on the first cast.</h2>
+        <p class="lead">Open the game, steer into a chart square and cast. No wallet, no sign up.</p>
+        <div class="cta">
+          <a class="btn btn-main" href="/sea/"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>Play now</a>
+          <a class="btn btn-ghost" href="/docs/">Read the guide</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Nephelimna</span>
+      <a href="https://sepolia.etherscan.io/address/0x05371fD71D88D57c5A6B7419538bF50601237c2E" rel="noopener" target="_blank">Contract <code>0x0537…7c2E</code></a>
+      <a href="https://github.com/imbanytuidoter/nephelimna" rel="noopener" target="_blank">Source on GitHub</a>
+      <a href="/docs/">Docs</a>
+      <span class="right">Built on Zama FHEVM for the Zama Developer Program</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/site/site.js"></script>
+</body>
+</html>

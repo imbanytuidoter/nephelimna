@@ -34,7 +34,7 @@ nephelimna.imbanytui.xyz {
 		}
 	}
 
-	@legacy not path /sea /sea/* /ocean /ocean/* /robots.txt
+	@legacy not path / /index.html /docs /docs/* /site/* /sea /sea/* /ocean /ocean/* /robots.txt
 	redir @legacy /sea/ 302
 
 	root * /var/www/nephelimna/current
