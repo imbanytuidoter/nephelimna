@@ -284,3 +284,13 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 7px; border-radius: 6
 
 .board tr.group td { padding: 16px 12px 4px; background: none; font: 700 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); }
 .board tr.group ~ tr .rank { background: rgba(47, 179, 179, 0.16) !important; color: var(--ink) !important; }
+
+.hero h1 { font-size: clamp(38px, 5.4vw, 78px); }
+.hero .lead { max-width: 50ch; }
+.hero .eyebrow { display: inline-block; padding: 6px 10px; border-radius: 8px; background: rgba(6, 18, 23, 0.55); backdrop-filter: blur(6px); }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(6, 18, 23, 0.78) 0%, rgba(6, 18, 23, 0.45) 34%, rgba(6, 18, 23, 0) 58%); pointer-events: none; }
+@media (min-width: 900px) {
+  .hero-media { animation: drift-wide 40s ease-in-out infinite alternate; }
+  @keyframes drift-wide { from { transform: scale(1.32) translate3d(12%, 0, 0); } to { transform: scale(1.36) translate3d(11%, -1%, 0); } }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 900px) { .hero-media { animation: none; transform: scale(1.32) translate3d(12%, 0, 0); } }
