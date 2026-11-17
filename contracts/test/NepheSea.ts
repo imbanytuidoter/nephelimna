@@ -40,7 +40,12 @@ async function sea(players: number, fill = true) {
   const wallets = signers.slice(1, 1 + players);
   const sessions: (typeof keeper | Awaited<ReturnType<typeof fresh>>)[] = [];
   for (let i = 0; i < players; i++) sessions.push(signers[11 + i] ?? (await fresh()));
-  for (let i = 0; i < players; i++) await (await contract.connect(wallets[i]!).join(sessions[i]!.address)).wait();
+  const consent = async (session: { signMessage: (m: Uint8Array) => Promise<string> }, player: string) => {
+    const chainId = (await ethers.provider.getNetwork()).chainId;
+    const inner = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string", "address", "uint256", "address"], ["nephelimna join", address, chainId, player]));
+    return session.signMessage(ethers.getBytes(inner));
+  };
+  for (let i = 0; i < players; i++) await (await contract.connect(wallets[i]!).join(sessions[i]!.address, await consent(sessions[i]!, wallets[i]!.address))).wait();
   if (fill) for (let done = 0; done < 64; done += BATCH) await (await contract.fillSea(Math.min(BATCH, 64 - done), GAS)).wait();
   const cellAt = async (i: number) => Number(await fhevm.cleartextDb.readUint16({ euint16: hex(await contract.cellHandle(i)) }));
   const leviathan = async () => Number(await fhevm.cleartextDb.readUint8({ euint8: hex(await contract.leviathanHandle()) }));
@@ -50,7 +55,11 @@ async function sea(players: number, fill = true) {
     const enc = await fhevm.helpers.encryptUint8({ value: choice, contractAddress: address, userAddress: session.address });
     return contract.connect(session).cast(cell, enc.externalEuint8, enc.inputProof, GAS);
   };
-  const setNet = async (i: number, cell: number) => {
+  const warm = async (i: number) => {
+    for (let n = 0; n < 3; n++) await (await cast(i, 63, choiceOf(Depth.Surface, Bait.LiveFish))).wait();
+  };
+  const setNet = async (i: number, cell: number, warmUp = true) => {
+    if (warmUp) await warm(i);
     const session = sessions[i]!;
     const enc = await fhevm.helpers.encryptUint8({ value: cell, contractAddress: address, userAddress: session.address });
     return contract.connect(session).setNet(enc.externalEuint8, enc.inputProof, GAS);
@@ -74,7 +83,7 @@ async function sea(players: number, fill = true) {
     }
     return null;
   };
-  return { contract, address, keeper, wallets, sessions, signers, cellAt, leviathan, score, cast, setNet, result, find, fresh };
+  return { contract, address, keeper, wallets, sessions, signers, cellAt, leviathan, score, cast, setNet, result, find, fresh, consent };
 }
 
 type Sea = Awaited<ReturnType<typeof sea>>;
@@ -125,9 +134,19 @@ describe("NepheSea", function () {
       const [session] = await s.contract.anglerInfo(s.wallets[0]!.address);
       expect(session).to.equal(s.sessions[0]!.address);
       expect(await s.contract.playerOf(s.sessions[1]!.address)).to.equal(s.wallets[1]!.address);
-      await expect(s.contract.connect(s.wallets[0]!).join(s.signers[9]!.address)).to.be.revertedWithCustomError(s.contract, "AlreadyJoined");
-      await expect(s.contract.connect(s.signers[5]!).join(s.sessions[1]!.address)).to.be.revertedWithCustomError(s.contract, "SessionTaken");
-      await expect(s.contract.connect(s.signers[5]!).join(ethers.ZeroAddress)).to.be.revertedWithCustomError(s.contract, "ZeroSession");
+      await expect(s.contract.connect(s.wallets[0]!).join(s.signers[9]!.address, await s.consent(s.signers[9]!, s.wallets[0]!.address))).to.be.revertedWithCustomError(s.contract, "AlreadyJoined");
+      await expect(s.contract.connect(s.signers[5]!).join(s.sessions[1]!.address, await s.consent(s.sessions[1]!, s.signers[5]!.address))).to.be.revertedWithCustomError(s.contract, "SessionTaken");
+      await expect(s.contract.connect(s.signers[5]!).join(ethers.ZeroAddress, "0x")).to.be.revertedWithCustomError(s.contract, "ZeroSession");
+    });
+
+    it("refuses to bind someone else's session key without that key's signature", async function () {
+      const s = await sea(0, false);
+      const attacker = s.signers[5]!;
+      const victim = s.signers[6]!;
+      await expect(s.contract.connect(attacker).join(victim.address, "0x")).to.be.revertedWithCustomError(s.contract, "BadConsent");
+      await expect(s.contract.connect(attacker).join(victim.address, await s.consent(victim, s.signers[7]!.address))).to.be.revertedWithCustomError(s.contract, "BadConsent");
+      await (await s.contract.connect(victim).join(victim.address, "0x")).wait();
+      expect(await s.contract.playerOf(victim.address)).to.equal(victim.address);
     });
   });
 
@@ -220,6 +239,13 @@ describe("NepheSea", function () {
       expect((await s.result(0)).snagged).to.equal(false);
     });
 
+    it("asks for three casts before each net", async function () {
+      const s = await sea(1);
+      await expect(s.setNet(0, 5, false)).to.be.revertedWithCustomError(s.contract, "NeedMoreCasts");
+      await (await s.setNet(0, 5)).wait();
+      await expect(s.setNet(0, 6, false)).to.be.revertedWithCustomError(s.contract, "NeedMoreCasts");
+    });
+
     it("allows two live nets per player and eight in the whole sea", async function () {
       const s = await sea(5);
       await (await s.setNet(0, 1)).wait();
@@ -260,11 +286,25 @@ describe("NepheSea", function () {
       expect(clearValue).to.equal(POINTS[spot.rarity]);
       const forged = ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [999]);
       await expect(s.contract.confirmScore(player, forged, checkSignaturesArgs.decryptionProof)).to.be.revert(ethers);
+      await expect(s.contract.connect(s.signers[8]!).confirmScore(player, checkSignaturesArgs.abiEncodedCleartexts, checkSignaturesArgs.decryptionProof)).to.be.revertedWithCustomError(s.contract, "NotKeeper");
       await expect(s.contract.confirmScore(player, checkSignaturesArgs.abiEncodedCleartexts, checkSignaturesArgs.decryptionProof)).to.emit(s.contract, "ScorePosted").withArgs(player, POINTS[spot.rarity]);
       await expect(s.contract.confirmScore(player, checkSignaturesArgs.abiEncodedCleartexts, checkSignaturesArgs.decryptionProof)).to.be.revertedWithCustomError(s.contract, "NothingToPost");
       const [, , posting, posted] = await s.contract.anglerInfo(player);
       expect(posting).to.equal(false);
       expect(posted).to.equal(BigInt(POINTS[spot.rarity]));
+    });
+
+    it("needs a new cast before every post, so posts cannot be spammed at the keeper's cost", async function () {
+      const s = await sea(1);
+      await expect(s.contract.connect(s.sessions[0]!).postScore("Early")).to.be.revertedWithCustomError(s.contract, "NothingNewToPost");
+      await (await s.cast(0, 63, choiceOf(Depth.Surface, Bait.LiveFish))).wait();
+      await (await s.contract.connect(s.sessions[0]!).postScore("Once")).wait();
+      const player = s.wallets[0]!.address;
+      const { checkSignaturesArgs } = await fhevm.helpers.decryptPublicUint32WithSignatures({ euint32: hex(await s.contract.postHandle(player)) });
+      await (await s.contract.confirmScore(player, checkSignaturesArgs.abiEncodedCleartexts, checkSignaturesArgs.decryptionProof)).wait();
+      await expect(s.contract.connect(s.sessions[0]!).postScore("Twice")).to.be.revertedWithCustomError(s.contract, "NothingNewToPost");
+      await (await s.cast(0, 63, choiceOf(Depth.Surface, Bait.LiveFish))).wait();
+      await (await s.contract.connect(s.sessions[0]!).postScore("Twice")).wait();
     });
 
     it("lets only a joined session ask to post", async function () {

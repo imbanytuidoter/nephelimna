@@ -28,6 +28,7 @@ import { createPresence } from "./presence.js";
 import { createRename } from "./rename.js";
 import { loadSession, saveSession } from "./session.js";
 import { createProgress } from "./progress.js";
+import { createGuide } from "./guide.js";
 import { createHoldPanel } from "./holdPanel.js";
 
 const fwd = new THREE.Vector3();
@@ -68,6 +69,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
   const sea = createSea({ baseUrl, cellName: cellLabel, nameOf: () => presence.name });
   const fishing = createFishing({ scene, body, patchMaterial, market, baseUrl, floaters, audio, sea, cellName: cellLabel });
   createProgress({ baseUrl });
+  createGuide();
   createHoldPanel({ market, baseUrl, audio });
   const restored = loadSession(Date.now(), fishing.gearSizes);
   if (restored && islandHeight(restored.x, restored.z) < LAND_LEVEL) {

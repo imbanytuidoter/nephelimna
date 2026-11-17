@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {FHE, ebool, euint8, euint16, euint32, externalEuint8} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
-import {Sea, Angler, CELLS, GENERATE_BATCH, NETS_PER_PLAYER, NAME_BYTES, NO_SLOT} from "./lib/NepheTypes.sol";
+import {Sea, Angler, CELLS, GENERATE_BATCH, NETS_PER_PLAYER, NAME_BYTES, NO_SLOT, CASTS_PER_NET} from "./lib/NepheTypes.sol";
 import {NepheLake} from "./lib/NepheLake.sol";
 import {NepheCast} from "./lib/NepheCast.sol";
 import {NepheTraps} from "./lib/NepheTraps.sol";
@@ -33,6 +33,9 @@ contract NepheSea is ZamaEthereumConfig {
     error NameTooLong();
     error AlreadyPosting();
     error NothingToPost();
+    error BadConsent();
+    error NothingNewToPost();
+    error NeedMoreCasts();
 
     modifier onlyKeeper() {
         if (msg.sender != keeper) revert NotKeeper();
@@ -50,8 +53,11 @@ contract NepheSea is ZamaEthereumConfig {
         emit SeaFilled(_sea.generated);
     }
 
-    function join(address session) external {
+    /// @dev Anyone could otherwise bind a stranger's session key first and lock its owner out,
+    /// so a session other than the caller has to sign this contract, chain and player.
+    function join(address session, bytes calldata consent) external {
         if (session == address(0)) revert ZeroSession();
+        if (session != msg.sender && _signer(msg.sender, consent) != session) revert BadConsent();
         Angler storage angler = _sea.anglers[msg.sender];
         if (angler.session != address(0)) revert AlreadyJoined();
         if (_sea.playerOf[session] != address(0)) revert SessionTaken();
@@ -73,6 +79,9 @@ contract NepheSea is ZamaEthereumConfig {
 
     function setNet(externalEuint8 cell, bytes calldata proof) external {
         address player = _player();
+        Angler storage angler = _sea.anglers[player];
+        if (angler.casts < angler.castsAtNet + CASTS_PER_NET) revert NeedMoreCasts();
+        angler.castsAtNet = angler.casts;
         (uint8 slot, uint8 owned) = NepheTraps.scan(_sea, player);
         if (owned >= NETS_PER_PLAYER) revert TooManyNets();
         if (slot == NO_SLOT) revert NetsFull();
@@ -85,11 +94,13 @@ contract NepheSea is ZamaEthereumConfig {
         if (bytes(name).length > NAME_BYTES) revert NameTooLong();
         Angler storage angler = _sea.anglers[player];
         if (angler.posting) revert AlreadyPosting();
+        if (angler.casts == angler.castsAtPost) revert NothingNewToPost();
+        angler.castsAtPost = angler.casts;
         NepheReveal.request(angler);
         emit ScorePostRequested(player, name);
     }
 
-    function confirmScore(address player, bytes calldata cleartexts, bytes calldata proof) external {
+    function confirmScore(address player, bytes calldata cleartexts, bytes calldata proof) external onlyKeeper {
         Angler storage angler = _sea.anglers[player];
         if (!angler.posting) revert NothingToPost();
         emit ScorePosted(player, NepheReveal.confirm(angler, cleartexts, proof));
@@ -106,6 +117,11 @@ contract NepheSea is ZamaEthereumConfig {
     function anglerInfo(address player) external view returns (address session, uint32 casts, bool posting, uint32 posted, uint64 postedAt) {
         Angler storage angler = _sea.anglers[player];
         return (angler.session, angler.casts, angler.posting, angler.posted, angler.postedAt);
+    }
+
+    function gates(address player) external view returns (uint32 casts, uint32 castsAtPost, uint32 castsAtNet) {
+        Angler storage angler = _sea.anglers[player];
+        return (angler.casts, angler.castsAtPost, angler.castsAtNet);
     }
 
     function castResult(address player) external view returns (euint8 weight, ebool rareNear, ebool levNear, ebool snagged) {
@@ -131,6 +147,19 @@ contract NepheSea is ZamaEthereumConfig {
 
     function leviathanHandle() external view returns (euint8) {
         return _sea.levPos;
+    }
+
+    function joinDigest(address player) public view returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encode("nephelimna join", address(this), block.chainid, player))));
+    }
+
+    function _signer(address player, bytes calldata consent) internal view returns (address) {
+        if (consent.length != 65) return address(0);
+        bytes32 r = bytes32(consent[0:32]);
+        bytes32 s = bytes32(consent[32:64]);
+        uint8 v = uint8(consent[64]);
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) return address(0);
+        return ecrecover(joinDigest(player), v, r, s);
     }
 
     function _player() internal view returns (address player) {

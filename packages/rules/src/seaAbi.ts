@@ -2,7 +2,9 @@ export const SEA_ABI = [
   "function keeper() view returns (address)",
   "function generated() view returns (uint8)",
   "function fillSea(uint8 count)",
-  "function join(address session)",
+  "function join(address session, bytes consent)",
+  "function joinDigest(address player) view returns (bytes32)",
+  "function gates(address player) view returns (uint32 casts, uint32 castsAtPost, uint32 castsAtNet)",
   "function cast(uint8 cell, bytes32 choice, bytes proof)",
   "function setNet(bytes32 cell, bytes proof)",
   "function postScore(string name)",
@@ -34,6 +36,9 @@ export const SEA_ABI = [
   "error NameTooLong()",
   "error AlreadyPosting()",
   "error NothingToPost()",
+  "error BadConsent()",
+  "error NothingNewToPost()",
+  "error NeedMoreCasts()",
 ] as const;
 
 export const SEA = {
@@ -41,6 +46,7 @@ export const SEA = {
   fillBatch: 4,
   netSlots: 8,
   netsPerPlayer: 2,
+  castsPerNet: 3,
   netLifetimeMs: 3_600_000,
   nameBytes: 64,
   castGas: 12_000_000n,

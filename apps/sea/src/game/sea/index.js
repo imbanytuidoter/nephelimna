@@ -73,6 +73,8 @@ function boardRow(row) {
   return tr;
 }
 
+class GateError extends Error {}
+
 export function createSea({ baseUrl, cellName, nameOf }) {
   const api = new URL(`${baseUrl}api/`, window.location.href);
   const el = (id) => document.getElementById(id);
@@ -97,6 +99,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   let posting = false;
   let postingAt = 0;
   let postedTx = null;
+  let lastCastBlock = undefined;
   const myRow = () => snapshot?.board?.find((entry) => entry.player.toLowerCase() === burner?.address?.toLowerCase());
   let nets = [];
   let myCasts = [];
@@ -207,6 +210,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
         failure = null;
         myCasts = [...myCasts, { cell }].slice(-MY_CASTS);
         ticket.result = result;
+        lastCastBlock = result.blockNumber;
         ticket.status = "done";
         void refreshTotal(result.blockNumber);
       })
@@ -231,10 +235,16 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     nets = [...nets, mark];
     say(`Setting a hidden net in ${cellName(cell)}. Nobody can see which square it is in.`);
     void ensureJoined(() => {})
-      .then((c) => c.setNet(cell))
+      .then(async (c) => {
+        const gate = await c.gates(lastCastBlock);
+        const short = gate.castsAtNet + SEA.castsPerNet - gate.casts;
+        if (short > 0) throw new GateError(`Make ${short} more sealed ${short === 1 ? "cast" : "casts"} before this net. Each net needs ${SEA.castsPerNet} casts.`);
+        return c.setNet(cell);
+      })
       .then(() => say("Net is set for an hour. When a rival lands a common or uncommon fish there, you score it three times."))
       .catch((error) => {
         nets = nets.filter((net) => net !== mark);
+        if (error instanceof GateError) return say(error.message);
         const full = error instanceof Error && /NetsFull|0x[0-9a-f]{8}/i.test(error.message);
         say(full ? "All hidden net places in the sea are taken. Try again later." : "The net did not reach the chain. Try again.");
       });
@@ -248,11 +258,15 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     postedTx = myRow()?.tx ?? null;
     failure = null;
     try {
-      await (await ensureChain()).postScore(nameOf());
+      const c = await ensureChain();
+      const gate = await c.gates(lastCastBlock);
+      if (gate.casts === gate.castsAtPost) throw new GateError("Cast again before you post a new score.");
+      await c.postScore(nameOf());
       say("Opening your total with a proof. It shows on the board in about half a minute.");
     } catch (error) {
       posting = false;
-      failure = error instanceof Error && /AlreadyPosting/.test(error.message) ? "Your last post is still being checked." : "The post did not reach the chain. Try again.";
+      if (error instanceof GateError) failure = error.message;
+      else failure = error instanceof Error && /AlreadyPosting/.test(error.message) ? "Your last post is still being checked." : "The post did not reach the chain. Try again.";
     }
   }
 

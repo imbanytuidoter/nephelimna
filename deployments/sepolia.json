@@ -1,9 +1,9 @@
 {
   "chainId": 11155111,
-  "NepheSea": "0x755cBa7f208918E2806aaeeE511a7d57c1749eEA",
+  "NepheSea": "0x05371fD71D88D57c5A6B7419538bF50601237c2E",
   "keeper": "0xB374edc38766385239587eed969db18101D1817E",
-  "deployedAt": "2026-11-16",
-  "deployTx": "0x6e66d44e36df72aa5644c7d6d3eca0bc910731a71754b0f714b773684b61f2e5",
-  "gasUsed": "20877958",
-  "deployBlock": 12148977
+  "deployedAt": "2026-11-17",
+  "deployTx": "0x593b1b91083e6e09126acf8b0192aecc6c18267b6e260c972e9413fa64dd2cb0",
+  "gasUsed": "22141204",
+  "deployBlock": 12154549
 }

@@ -12,6 +12,7 @@ uint8 constant NETS_PER_PLAYER = 2;
 uint64 constant NET_LIFETIME = 1 hours;
 uint8 constant NAME_BYTES = 64;
 uint8 constant NO_SLOT = 255;
+uint32 constant CASTS_PER_NET = 3;
 
 struct Angler {
     address session;
@@ -19,6 +20,8 @@ struct Angler {
     bool posting;
     uint32 posted;
     uint64 postedAt;
+    uint32 castsAtPost;
+    uint32 castsAtNet;
     euint32 score;
     euint32 pending;
     euint8 lastCatch;

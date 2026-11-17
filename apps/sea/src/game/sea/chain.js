@@ -102,7 +102,11 @@ export function createSeaChain({ rpcUrl, address, key }) {
       const player = await publicClient.readContract({ address, abi, functionName: "playerOf", args: [account.address] });
       return !/^0x0{40}$/i.test(player);
     },
-    join: () => send("join", [account.address], SEA.joinGas),
+    join: () => send("join", [account.address, "0x"], SEA.joinGas),
+    async gates(blockNumber) {
+      const [casts, castsAtPost, castsAtNet] = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "gates", args: [account.address], ...(blockNumber ? { blockNumber } : {}) }));
+      return { casts: Number(casts), castsAtPost: Number(castsAtPost), castsAtNet: Number(castsAtNet) };
+    },
     async setNet(cell) {
       const enc = await encrypt([cell]);
       return send("setNet", [enc.encryptedValues[0], enc.inputProof], SEA.netGas);

@@ -509,17 +509,19 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       audio.loop("reel", reeling || rod.phase === "retrieving" ? 0.55 : 0, reeling ? 0.8 + 0.4 * (1 - Math.min(1, tension)) : 1.2);
       audio.loop("drag", fighting && fight.slipping ? 0.7 : 0, 1);
 
-      const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : rod.phase === "idle" && lines.length ? `Cast · ${lines.length} sealed out` : (PROMPT[rod.phase] ?? "");
+      const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : (PROMPT[rod.phase] ?? "");
       const prompt = fighting && ["run", "coil", "jump"].includes(fight.mode) ? "Let it run" : label;
       if (actionLabel.textContent !== prompt) actionLabel.textContent = prompt;
       lockTackle(rod.phase !== "idle");
+      action.classList.toggle("busy", rod.pending);
       action.classList.toggle("alert", rod.phase === "take");
       action.classList.toggle("ease", fighting && ["run", "coil", "jump"].includes(fight.mode));
       const gauge = fighting ? Math.min(1, strain) : rod.phase === "charging" ? rod.charge : rod.phase === "fight" ? 0 : 0;
       action.style.setProperty("--gauge", gauge.toFixed(3));
       action.style.setProperty("--gauge-colour", fighting ? (strain > 0.92 ? "#ff4a3a" : strain > 0.6 ? "#f0b04a" : "#8fd6c8") : "#f2f6f4");
       const line = fighting ? `${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m to the boat` : rod.phase === "charging" ? `${Math.round(castDistance(rod.charge))} m` : "";
-      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? "Hold to aim, let go to cast" : line;
+      const linesOut = lines.length ? `${lines.length} sealed ${lines.length === 1 ? "line" : "lines"} out. ` : "";
+      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? `${linesOut}Hold to aim, let go to cast` : line;
       if (actionDetail.textContent !== detail) actionDetail.textContent = detail;
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";
