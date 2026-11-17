@@ -51,3 +51,9 @@ describe("AI anglers", () => {
     expect(boat.fishUntil).toBeGreaterThan(boat.castAt);
   });
 });
+
+describe("AI angler strength", () => {
+  test("no AI angler fishes with live bait, so the Leviathan and mythic fish stay for people", () => {
+    for (const style of STYLES) for (const [, bait] of style.choices) expect(bait).not.toBe(2);
+  });
+});

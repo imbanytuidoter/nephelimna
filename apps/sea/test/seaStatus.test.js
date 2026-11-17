@@ -48,16 +48,3 @@ describe("sea status", () => {
   });
 });
 
-describe("grouped board", () => {
-  test("people rank first and AI anglers rank in their own group", async () => {
-    const { groupBoard } = await import("../src/game/sea/status.js");
-    const rows = [
-      { rank: 1, player: "0x1", score: 117, bot: true },
-      { rank: 2, player: "0x2", score: 25, bot: true },
-      { rank: 3, player: "0x3", score: 2, bot: false },
-    ];
-    const { people, ai } = groupBoard(rows);
-    expect(people.map((row) => [row.player, row.rank])).toEqual([["0x3", 1]]);
-    expect(ai.map((row) => [row.player, row.rank])).toEqual([["0x1", 1], ["0x2", 2]]);
-  });
-});

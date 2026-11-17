@@ -11,7 +11,7 @@ const FUND_WEI = 10_000_000_000_000_000n;
 const FUND_CHECKS = 10;
 const FUND_CHECK_MS = 3000;
 const POST_AFTER = [6, 12] as const;
-const CAST_GAP_S = [60, 150] as const;
+const CAST_GAP_S = [150, 330] as const;
 const FISH_FOR_S = [360, 840] as const;
 const SAIL_SPEED = 6;
 const ARRIVE_M = 8;
@@ -22,6 +22,7 @@ const OPEN_WATER_FROM = 700;
 const OPEN_WATER_TO = 1500;
 const NAME_SUFFIX = " AI";
 const SAVE_EVERY_MS = 60_000;
+const CLOCK_WRAP_MS = 100_000_000;
 
 interface Style {
   readonly name: string;
@@ -29,11 +30,11 @@ interface Style {
 }
 
 export const STYLES: readonly Style[] = [
-  { name: "Old Pike", choices: [[0, 0, 5], [1, 0, 3], [1, 1, 1]] },
-  { name: "Mara of the Reef", choices: [[1, 1, 4], [2, 1, 3], [0, 0, 2]] },
-  { name: "Brine Owl", choices: [[2, 1, 4], [2, 2, 2], [1, 1, 2]] },
-  { name: "Kelpie", choices: [[0, 0, 3], [0, 1, 2], [1, 0, 3]] },
-  { name: "Salt Wren", choices: [[2, 2, 3], [2, 1, 3], [1, 1, 1]] },
+  { name: "Old Pike", choices: [[0, 0, 5], [1, 0, 3], [0, 1, 1]] },
+  { name: "Mara of the Reef", choices: [[1, 0, 3], [1, 1, 2], [0, 0, 3]] },
+  { name: "Brine Owl", choices: [[0, 0, 3], [1, 1, 2], [2, 0, 2]] },
+  { name: "Kelpie", choices: [[0, 0, 4], [0, 1, 2], [1, 0, 2]] },
+  { name: "Salt Wren", choices: [[1, 0, 3], [2, 0, 2], [0, 1, 2]] },
 ];
 
 export interface Boat {
@@ -120,6 +121,17 @@ function loadBots(file: string, log: Log): Bot[] | null {
   }
 }
 
+/** Earlier bots fished on a timer with nobody at sea and piled up scores no person could match, so their keys are kept only to hide their rows. */
+function loadRetired(file: string): Set<string> {
+  if (!existsSync(file)) return new Set();
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as { key: string }[];
+    return new Set(raw.filter((bot) => KEY_PATTERN.test(bot.key)).map((bot) => privateKeyToAccount(bot.key as Hex).address.toLowerCase()));
+  } catch {
+    return new Set();
+  }
+}
+
 export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, random: Random = Math.random) {
   const fresh = (): Bot[] => STYLES.map((_, style) => ({ key: generatePrivateKey(), style, joined: false, casts: 0, postAt: Math.round(between(...POST_AFTER, random())) }));
   let bots: Bot[] = (loadBots(file, log) ?? fresh()).map((bot, i) => ({ ...bot, boat: bot.boat ?? firstBoat(i, random) }));
@@ -133,6 +145,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
   const names = new Map(accounts.map((account, i) => [account.address.toLowerCase(), STYLES[bots[i]!.style]!.name]));
   const boatIds = accounts.map((account) => account.address.slice(2, 18).toLowerCase());
   const ownIds = new Set(boatIds);
+  const retired = loadRetired(file.replace(/\.json$/, ".retired.json"));
   let busy = false;
   let lastStep = Date.now();
   let lastSave = 0;
@@ -179,7 +192,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
   const peopleOnline = (now: number) => presence.ids(now).some((id) => !ownIds.has(id));
 
   function show(now: number) {
-    bots.forEach((bot, i) => presence.update({ id: boatIds[i], name: `${STYLES[bot.style]!.name}${NAME_SUFFIX}`, x: bot.boat!.x, y: 0, z: bot.boat!.z, yaw: bot.boat!.yaw, t: now / 1000 }, now));
+    bots.forEach((bot, i) => presence.update({ id: boatIds[i], name: `${STYLES[bot.style]!.name}${NAME_SUFFIX}`, x: bot.boat!.x, y: 0, z: bot.boat!.z, yaw: bot.boat!.yaw, t: (now % CLOCK_WRAP_MS) / 1000 }, now));
   }
 
   function maybeCast(now: number) {
@@ -198,6 +211,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
 
   return {
     isBot: (player: string) => names.has(player.toLowerCase()),
+    isRetired: (player: string) => retired.has(player.toLowerCase()),
     nameOf: (player: string) => names.get(player.toLowerCase()) ?? null,
     async tick() {
       const now = Date.now();

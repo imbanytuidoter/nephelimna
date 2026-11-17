@@ -1,5 +1,5 @@
 import { SEA } from "@nephelimna/rules";
-import { describeSea, groupBoard, markBoard } from "./status.js";
+import { describeSea, markBoard } from "./status.js";
 import { keepKeysInside } from "../rename.js";
 
 const STORE = "nephelimna.burner.v1";
@@ -49,14 +49,6 @@ function tag(name, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
-}
-
-function groupRow(label) {
-  const tr = tag("tr", "group");
-  const td = tag("td", "", label);
-  td.colSpan = 4;
-  tr.append(td);
-  return tr;
 }
 
 function boardRow(row) {
@@ -284,9 +276,8 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     const key = rows.map((row) => `${row.player}:${row.score}:${row.name}:${row.tx}`).join("|");
     if (key === boardKey) return;
     boardKey = key;
-    const { people, ai } = groupBoard(rows);
-    boardList.replaceChildren(...people.map(boardRow), ...(ai.length ? [groupRow("AI anglers"), ...ai.map(boardRow)] : []));
-    boardNote.textContent = rows.length ? "People rank first. AI anglers fish only while people are at sea. Open a proof to see the transaction that checked a score." : "No scores posted yet.";
+    boardList.replaceChildren(...rows.map(boardRow));
+    boardNote.textContent = rows.length ? "AI anglers sail and fish only while people are at sea, and their scores go through the same proof. Open a proof to see its transaction." : "No scores posted yet.";
   }
 
   postButton.addEventListener("click", () => void post());
