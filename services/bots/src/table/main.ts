@@ -31,6 +31,11 @@ async function loop(name: string, run: () => Promise<void>, everyMs: number) {
 async function drip(address: Hex) {
   const balance = await chain.publicClient.getBalance({ address });
   if (balance >= config.dripFloorWei) return { ok: true };
+  const reserve = await chain.publicClient.getBalance({ address: keeperAccount.address });
+  if (reserve < config.keeperReserveWei + config.dripWei) {
+    log({ event: "drip-refused-reserve", reserve: reserve.toString() });
+    return { ok: false, reason: "the faucet is empty for today" };
+  }
   await chain.pay(keeperAccount, address, config.dripWei);
   log({ event: "drip", address });
   return { ok: true };

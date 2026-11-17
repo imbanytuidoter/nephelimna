@@ -486,7 +486,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   };
 
   const describe = (rod) => {
-    if (rod.pending) return "Zama is opening your square";
+    if (rod.pending) return "Decrypting your catch";
     const heavy = rod.catch?.species?.rarity === "chest";
     if (rod.phase === "take") return heavy ? "Something caught your hook. Strike now!" : "It took the bait. Strike now!";
     if (heavy && rod.phase === "fight") return "Heavy. Keep reeling";

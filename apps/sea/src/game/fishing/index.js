@@ -48,12 +48,13 @@ const NOTES = {
   snapped: "The line snapped. Let go when it runs.",
   threw: "It threw the hook. Keep the line tight.",
   "no-net": `You need a net. The fish market sells one for ${NET.price} coins.`,
-  "off-chart": "Fish inside the chart squares. Every cast there is sealed on Zama.",
-  "sea-closed": "The sealed sea is out of reach right now. Try again in a moment.",
+  "off-chart": "Fish inside the chart squares. Every cast there is a sealed transaction on Sepolia.",
+  "sea-closed": "Cannot reach the chain right now. Try again in a moment.",
   "chain-failed": "The cast did not reach the chain. Try again.",
   snagged: "A hidden net took that fish. A rival scores it.",
-  "line-left": "Line left sealed on chain. Cast again, your catch surfaces when Zama opens it.",
+  "line-left": "Your line stays out. Cast again. The catch shows up once it is decrypted.",
   "lines-busy": "Three sealed lines are still out. Wait for one to surface.",
+  take: "It took the bait. Strike now!",
 };
 const MAX_LINES = 3;
 const TROPHY_SIZE = { common: 0.5, uncommon: 0.65, rare: 0.85, mythic: 1.2, chest: 1 };
@@ -208,6 +209,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
     if (!sea.fishing()) return { blocked: true, event: "sea-closed" };
     if (index < 0) return { blocked: true, event: "off-chart" };
     if (lines.length >= MAX_LINES) return { blocked: true, event: "lines-busy" };
+    if (ticket) lines = [...lines, { ticket, x: target.x, z: target.z }];
     ticket = sea.cast(index, DEPTHS[depth].value, BAITS[bait].value);
     return { pending: true };
   };
@@ -257,7 +259,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
   const land = (caught) => {
     if (caught.species.rarity === "chest") {
       market.setHold(stowChest(market.hold));
-      card.showChest("Stowed in your hold. Open it from the hold button, or press I.");
+      card.showChest("Stowed in your hold. Open it from the hold button.");
       audio.play("chest", 0.9);
       return;
     }
@@ -517,12 +519,12 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       action.style.setProperty("--gauge", gauge.toFixed(3));
       action.style.setProperty("--gauge-colour", fighting ? (strain > 0.92 ? "#ff4a3a" : strain > 0.6 ? "#f0b04a" : "#8fd6c8") : "#f2f6f4");
       const line = fighting ? `${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m to the boat` : rod.phase === "charging" ? `${Math.round(castDistance(rod.charge))} m` : "";
-      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? "Hold to aim, let go to throw" : line;
+      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? "Hold to aim, let go to cast" : line;
       if (actionDetail.textContent !== detail) actionDetail.textContent = detail;
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";
       if (bonus.textContent !== twinText) bonus.textContent = twinText;
-      const netState = !market.hold.hasNet ? ["Buy a net", `${NET.price} coins at the market`] : [sea.netsOut() ? "Hidden net set" : "Set hidden net", "Steals rivals' fish for an hour"];
+      const netState = !market.hold.hasNet ? ["Buy a net", `${NET.price} coins at the market`] : [sea.netsOut() ? "Hidden net set" : "Set hidden net", "Scores rivals' small catches, 1 hour"];
       const netKey = netState.join("|");
       if (netButton.dataset.key !== netKey) {
         netButton.dataset.key = netKey;

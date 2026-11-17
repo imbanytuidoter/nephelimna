@@ -12,6 +12,9 @@ const PRESENCE_BODY = 1_024;
 const SAVE_BODY = 16_384;
 const SAVES_PER_MINUTE = 30;
 const RPC_TIMEOUT_MS = 20_000;
+const DRIPS_PER_IP_DAILY = 12;
+const METHOD_LOG_CHARS = 64;
+const DAY_MS = 86_400_000;
 const RPC_METHODS = new Set([
   "eth_chainId",
   "eth_blockNumber",
@@ -42,13 +45,13 @@ export interface Routes {
 
 export function createLimiter(limit: number, windowMs: number) {
   const hits = new Map<string, number[]>();
-  return (key: string, now: number): boolean => {
+  return (key: string, now: number, weight = 1): boolean => {
     const recent = (hits.get(key) ?? []).filter((time) => now - time < windowMs);
-    if (recent.length >= limit) {
+    if (recent.length + weight > limit) {
       hits.set(key, recent);
       return false;
     }
-    recent.push(now);
+    for (let i = 0; i < weight; i++) recent.push(now);
     hits.set(key, recent);
     if (hits.size > 5000) for (const [k, times] of hits) if (times.every((time) => now - time >= windowMs)) hits.delete(k);
     return true;
@@ -69,8 +72,14 @@ async function readBody(request: IncomingMessage, limit = MAX_BODY): Promise<unk
     if (size > limit) throw new Error("body too large");
     chunks.push(chunk as Buffer);
   }
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new BadRequest("bad json");
+  }
 }
+
+class BadRequest extends Error {}
 
 function reply(response: ServerResponse, status: number, body: unknown) {
   response.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
@@ -97,7 +106,8 @@ export function rpcRefusal(body: unknown): unknown {
 export function createHttp(routes: Routes) {
   const dripByIp = createLimiter(DRIPS_PER_IP, WINDOW_MS);
   const dripByAddress = createLimiter(1, WINDOW_MS);
-  const dripDaily = createLimiter(routes.dailyDrips, 86_400_000);
+  const dripDaily = createLimiter(routes.dailyDrips, DAY_MS);
+  const dripByIpDaily = createLimiter(DRIPS_PER_IP_DAILY, DAY_MS);
   const rpcByIp = createLimiter(RPC_PER_MINUTE, 60_000);
   const presenceByIp = createLimiter(PRESENCE_PER_MINUTE, 60_000);
   const presence = createPresence();
@@ -137,16 +147,16 @@ export function createHttp(routes: Routes) {
           const body = (await readBody(request)) as { address?: unknown };
           if (typeof body.address !== "string" || !isAddress(body.address)) return reply(response, 400, { ok: false, reason: "bad address" });
           const address = body.address.toLowerCase() as Hex;
-          if (!dripByIp(clientIp(request), now) || !dripByAddress(address, now)) return reply(response, 429, { ok: false, reason: "slow down" });
+          if (!dripByIp(clientIp(request), now) || !dripByIpDaily(clientIp(request), now) || !dripByAddress(address, now)) return reply(response, 429, { ok: false, reason: "slow down" });
           if (!dripDaily("all", now)) return reply(response, 429, { ok: false, reason: "the faucet is empty for today" });
           const result = await routes.drip(address);
           return reply(response, result.ok ? 200 : 503, result);
         }
         if (request.method === "POST" && path === "/rpc") {
-          if (!rpcByIp(clientIp(request), now)) return reply(response, 429, { error: "slow down" });
           const body = await readBody(request);
+          if (!rpcByIp(clientIp(request), now, Array.isArray(body) ? Math.max(1, body.length) : 1)) return reply(response, 429, { error: "slow down" });
           if (!rpcAllowed(body)) {
-            routes.log({ event: "rpc-refused", methods: (Array.isArray(body) ? body : [body]).map((call) => String((call as { method?: unknown })?.method)).slice(0, 5) });
+            routes.log({ event: "rpc-refused", methods: (Array.isArray(body) ? body : [body]).slice(0, 5).map((call) => String((call as { method?: unknown })?.method).slice(0, METHOD_LOG_CHARS)) });
             const refusal = rpcRefusal(body);
             return refusal ? reply(response, 200, refusal) : reply(response, 400, { error: "method not allowed" });
           }
@@ -156,6 +166,7 @@ export function createHttp(routes: Routes) {
         }
         return reply(response, 404, { error: "not found" });
       } catch (error) {
+        if (error instanceof BadRequest) return reply(response, 400, { error: error.message });
         routes.log({ event: "http-error", path, error: String(error).slice(0, 200) });
         return reply(response, 500, { error: "server error" });
       }

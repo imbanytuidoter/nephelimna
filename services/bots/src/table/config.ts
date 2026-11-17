@@ -9,6 +9,7 @@ export interface Config {
   readonly startBlock: number | null;
   readonly dripWei: bigint;
   readonly dripFloorWei: bigint;
+  readonly keeperReserveWei: bigint;
   readonly dailyDrips: number;
 }
 
@@ -38,6 +39,7 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
     startBlock: env.SEA_START_BLOCK === undefined ? null : count(env, "SEA_START_BLOCK", 0, 0, 1e12),
     dripWei: BigInt(count(env, "DRIP_GWEI", 2_000_000, 1000, 50_000_000)) * 1_000_000_000n,
     dripFloorWei: BigInt(count(env, "DRIP_FLOOR_GWEI", 500_000, 1000, 50_000_000)) * 1_000_000_000n,
+    keeperReserveWei: BigInt(count(env, "KEEPER_RESERVE_GWEI", 50_000_000, 0, 1_000_000_000)) * 1_000_000_000n,
     dailyDrips: count(env, "DAILY_DRIPS", 400, 1, 100_000),
   };
 }

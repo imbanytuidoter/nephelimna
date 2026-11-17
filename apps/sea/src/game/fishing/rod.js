@@ -52,7 +52,7 @@ export function stepRod(rod, dt, input, world) {
   const one = (next, event) => ({ rod: next, events: event ? [event] : [] });
   switch (rod.phase) {
     case "idle":
-      if (input.pressed && world.canFish) return one(to(rod, "charging", { charge: 0, catch: null, fight: null, sealed: false }), "draw");
+      if (input.pressed && world.canFish) return one(to(rod, "charging", { charge: 0, catch: null, fight: null, sealed: false, pending: false }), "draw");
       return one(rod, input.pressed ? "moving" : null);
     case "charging": {
       const charge = Math.min(1, time / ROD.chargeTime);
@@ -69,6 +69,10 @@ export function stepRod(rod, dt, input, world) {
       return one(plan(rod, outcome, world.random, false), "splash");
     }
     case "waiting": {
+      if (!world.canFish && rod.pending) {
+        world.leave();
+        return one(to(rod, "retrieving", { catch: null, pending: false }), "line-left");
+      }
       if (!world.canFish) return one(to(rod, "retrieving", { catch: null }), "reeled");
       if (rod.pending) {
         const verdict = world.verdict();

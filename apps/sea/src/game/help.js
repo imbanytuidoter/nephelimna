@@ -1,5 +1,6 @@
 const STORE = "nephelimna.help.v1";
 const NARROW = 560;
+const SHORT = 520;
 
 export function helpRows({ deck, touch, nearMarket, hasNet, netPrice }) {
   const rows = [];
@@ -41,7 +42,7 @@ export function createHelp({ touch, netPrice, onDepth }) {
   let open = true;
   try {
     const saved = localStorage.getItem(STORE);
-    open = saved === null ? !touch && window.innerWidth >= NARROW : saved === "open";
+    open = saved === null ? !touch && window.innerWidth >= NARROW && window.innerHeight >= SHORT : saved === "open";
   } catch {
     open = !touch;
   }

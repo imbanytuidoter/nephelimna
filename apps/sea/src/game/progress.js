@@ -67,7 +67,7 @@ export function createProgress({ baseUrl }) {
 
   const restore = async () => {
     const entered = el("progress-enter").value.trim().toLowerCase();
-    if (!CODE_PATTERN.test(entered)) return say("That is not a progress code. It has 32 letters and digits.");
+    if (!CODE_PATTERN.test(entered)) return say("That is not a progress code. It is 32 characters: digits and letters a to f.");
     say("Looking for your save...");
     try {
       const response = await fetch(new URL("load", api), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: entered }) });

@@ -1,8 +1,10 @@
 import { SEA } from "@nephelimna/rules";
 import { describeSea, markBoard } from "./status.js";
+import { keepKeysInside } from "../rename.js";
 
 const STORE = "nephelimna.burner.v1";
 const POLL_MS = 3000;
+const POST_WAIT_MS = 300_000;
 const PAINT_MS = 250;
 const TOTAL_EVERY_MS = 60_000;
 const GAS_FLOOR = 300_000_000_000_000n;
@@ -93,6 +95,9 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   let total = null;
   let totalAt = 0;
   let posting = false;
+  let postingAt = 0;
+  let postedTx = null;
+  const myRow = () => snapshot?.board?.find((entry) => entry.player.toLowerCase() === burner?.address?.toLowerCase());
   let nets = [];
   let myCasts = [];
   let lastPaint = 0;
@@ -100,15 +105,23 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   const notes = [];
   const say = (text) => notes.push(text);
 
-  async function ensureChain() {
-    if (chain) return chain;
-    if (!snapshot?.sea) throw new Error("The sealed sea is out of reach. Try again in a moment.");
-    const { createSeaChain } = await import("./chain.js");
-    if (!burner) burner = { key: newKey(), address: null };
-    chain = createSeaChain({ rpcUrl: new URL("rpc", api).toString(), address: snapshot.sea, key: burner.key });
-    burner = { key: burner.key, address: chain.address };
-    saveBurner(burner);
-    return chain;
+  let chainTask = null;
+
+  /** Two callers racing here would build two SDKs with separate nonce queues for one key, so the setup runs once and everyone shares it. */
+  function ensureChain() {
+    if (chain) return Promise.resolve(chain);
+    if (!snapshot?.sea) return Promise.reject(new Error("Cannot reach the chain right now. Try again in a moment."));
+    chainTask ??= (async () => {
+      const { createSeaChain } = await import("./chain.js");
+      if (!burner) burner = { key: newKey(), address: null };
+      chain = createSeaChain({ rpcUrl: new URL("rpc", api).toString(), address: snapshot.sea, key: burner.key });
+      burner = { key: burner.key, address: chain.address };
+      saveBurner(burner);
+      return chain;
+    })().finally(() => {
+      chainTask = null;
+    });
+    return chainTask;
   }
 
   async function poll() {
@@ -119,12 +132,14 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     } catch {
       snapshot = snapshot && Date.now() - snapshot.receivedAt < 20_000 ? snapshot : null;
     }
-    if (posting && burner?.address && !snapshot?.posting?.some((player) => player.toLowerCase() === burner.address.toLowerCase())) {
-      const row = snapshot?.board?.find((entry) => entry.player.toLowerCase() === burner.address.toLowerCase());
-      if (row) {
-        posting = false;
-        say(`Score posted: ${row.score} pts, rank ${row.rank} of ${snapshot.board.length}. The contract checked the proof.`);
-      }
+    if (!posting || !burner?.address) return;
+    const row = myRow();
+    if (row && row.tx !== postedTx) {
+      posting = false;
+      say(`Score posted: ${row.score} pts, rank ${row.rank} of ${snapshot.board.length}. The contract checked the proof.`);
+    } else if (Date.now() - postingAt > POST_WAIT_MS) {
+      posting = false;
+      failure = "The score check is taking long. Post again in a moment.";
     }
   }
 
@@ -158,7 +173,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
       return c;
     }
     if ((await c.balance()) < GAS_FLOOR) {
-      onStage("Getting test ETH for your boat");
+      onStage("Getting test ETH");
       const response = await fetch(new URL("drip", api), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: c.address }) });
       if (!response.ok) throw new Error(response.status === 429 ? "The faucet is busy. Try again in a few minutes." : "The faucet did not answer. Try again.");
       if (!(await c.waitForGas(GAS_FLOOR))) throw new Error("Test ETH did not arrive yet. Try again.");
@@ -217,7 +232,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     say(`Setting a hidden net in ${cellName(cell)}. Nobody can see which square it is in.`);
     void ensureJoined(() => {})
       .then((c) => c.setNet(cell))
-      .then(() => say("Net is set for an hour. Every common or uncommon fish a rival lands there is yours, worth three fish."))
+      .then(() => say("Net is set for an hour. When a rival lands a common or uncommon fish there, you score it three times."))
       .catch((error) => {
         nets = nets.filter((net) => net !== mark);
         const full = error instanceof Error && /NetsFull|0x[0-9a-f]{8}/i.test(error.message);
@@ -229,6 +244,8 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   async function post() {
     if (posting || !joined) return;
     posting = true;
+    postingAt = Date.now();
+    postedTx = myRow()?.tx ?? null;
     failure = null;
     try {
       await (await ensureChain()).postScore(nameOf());
@@ -241,11 +258,11 @@ export function createSea({ baseUrl, cellName, nameOf }) {
 
   function paintBoard() {
     const rows = markBoard(snapshot?.board ?? [], burner?.address);
-    const key = rows.map((row) => `${row.player}:${row.score}`).join("|");
+    const key = rows.map((row) => `${row.player}:${row.score}:${row.name}:${row.tx}`).join("|");
     if (key === boardKey) return;
     boardKey = key;
     boardList.replaceChildren(...rows.map(boardRow));
-    boardNote.textContent = rows.length ? "Open a proof to see the transaction that checked the score." : "Nobody has posted a score yet. Be the first.";
+    boardNote.textContent = rows.length ? "Open a proof to see the transaction that checked the score." : "No scores posted yet.";
   }
 
   postButton.addEventListener("click", () => void post());
@@ -254,6 +271,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     board.showModal();
   });
   el("board-close").addEventListener("click", () => board.close());
+  keepKeysInside(board);
 
   void poll().then(async () => {
     if (!burner || !snapshot?.sea) return;

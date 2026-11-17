@@ -370,6 +370,17 @@
     @media (pointer: coarse) and (orientation: portrait) { #rotate { display: flex; } }
     @media (prefers-reduced-motion: reduce) { #rotate svg { animation: none; } }
     @media (prefers-reduced-motion: reduce) { .hint { transition: none; } }
+    .mobile .key, .mobile kbd { display: none; }
+    @media (max-height: 520px) {
+      #hud-game .gauge, #hud-game .nav, #sea, #fishing, #help, #mode-toggle, #trade-prompt, #catch-card, #hud-game .hint { zoom: 0.78; }
+      #underwater { width: min(190px, 27vw); }
+      #sea-detail { display: none; }
+      .fps { display: none; }
+    }
+    @media (max-height: 400px) {
+      #hud-game .gauge, #hud-game .nav, #sea, #fishing, #help, #mode-toggle, #trade-prompt, #catch-card, #hud-game .hint { zoom: 0.68; }
+      #minimap { width: 112px; height: 112px; }
+    }
   </style>
 </head>
 <body>
@@ -438,12 +449,12 @@
   </dialog>
   <dialog id="rename" aria-labelledby="rename-title">
     <h2 id="rename-title">Name your boat</h2>
-    <p>Other players see this name over your boat. Use 2 to 20 letters, digits, spaces, dots, dashes or apostrophes. Leave it empty to get a random name back.</p>
+    <p>Other players see this name over your boat. Use 2 to 20 letters, digits, spaces, dots, hyphens or apostrophes. Leave it empty to get a random name back.</p>
     <form id="rename-form" class="row" method="dialog"><input id="rename-input" maxlength="20" autocomplete="off" spellcheck="false" aria-label="Boat name"><button type="submit">Save</button></form>
     <p id="rename-status" role="status" aria-live="polite"></p>
     <button id="rename-close" class="quiet" type="button">Close</button>
   </dialog>
-  <button id="mode-toggle" type="button" hidden>Drop anchor and fish (G)</button>
+  <button id="mode-toggle" type="button" hidden>Drop anchor and fish</button>
   <div id="crosshair" hidden></div>
   <aside id="help" aria-label="Controls" hidden>
     <header><b>Controls</b><button id="help-toggle" type="button" aria-controls="help-list">Hide (H)</button></header>
@@ -454,7 +465,7 @@
     <span id="sea-detail"></span>
     <div class="sea-actions">
       <button id="sea-post" type="button" hidden>Post my score</button>
-      <button id="sea-board" type="button">Board</button>
+      <button id="sea-board" type="button">Leaderboard</button>
     </div>
   </div>
   <dialog id="board" aria-labelledby="board-title">
@@ -465,7 +476,7 @@
       </div>
       <button id="board-close" type="button" aria-label="Close board"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
     </header>
-    <p class="board-lead">Totals stay encrypted until the angler posts them. Each score is opened once with a Zama proof that the contract checks on Sepolia.</p>
+    <p class="board-lead">Totals stay encrypted until the angler posts them. Each posted score is decrypted with a Zama proof that the contract checks on Sepolia.</p>
     <div class="board-frame">
       <table>
         <thead><tr><th scope="col">#</th><th scope="col">Angler</th><th scope="col">Score</th><th scope="col"><span class="sr">Proof</span></th></tr></thead>
@@ -481,7 +492,7 @@
     <div id="catch-stats"></div>
     <span id="catch-value"></span>
   </div>
-  <button id="trade-prompt" type="button" hidden>Fish market: trade (E)</button>
+  <button id="trade-prompt" type="button" hidden>Fish market: trade<span class="key"> (E)</span></button>
   <div id="market-panel" class="sheet" role="dialog" aria-labelledby="market-title" hidden>
     <div class="sheet-head"><h2 id="market-title">Fish market</h2><span class="sheet-coins" id="market-coins">0 coins</span></div>
     <div class="tabs" role="tablist" aria-label="Fish market">
@@ -504,7 +515,7 @@
       <div class="flag-preview"><canvas id="market-flag-preview" width="224" height="140"></canvas><div><b id="market-flag-name"></b><p id="market-flag-state"></p><button class="primary" id="market-flag-act" type="button"></button></div></div>
       <div id="market-flags"></div>
     </section>
-    <button class="quiet" id="market-close" type="button">Close (E)</button>
+    <button class="quiet" id="market-close" type="button">Close<span class="key"> (E)</span></button>
   </div>
   <div id="hold-panel" class="sheet" role="dialog" aria-labelledby="hold-title" hidden>
     <div class="sheet-head"><h2 id="hold-title">Your hold</h2><span class="sheet-coins" id="hold-coins">0 coins</span></div>
@@ -517,12 +528,12 @@
     <span class="sheet-label">Gear</span>
     <div class="bin" id="hold-gear"></div>
     <p>Sell your catch and buy gear at the fish market by the pier.</p>
-    <button class="quiet" id="hold-close" type="button">Close (I)</button>
+    <button class="quiet" id="hold-close" type="button">Close<span class="key"> (I)</span></button>
   </div>
   <div id="chart-panel" hidden>
     <canvas id="chart"></canvas>
-    <p id="chart-legend" hidden>Square dots: your casts. Round dots: rivals. After the round: S, M, B are surface, middle and bottom; C, U, R, M are common, uncommon, rare and mythic, with the fish left.</p>
-    <p>Tap anywhere or press M to close</p>
+    <p id="chart-legend" hidden>Squares show your casts.</p>
+    <p>Tap anywhere<span class="key"> or press M</span> to close</p>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

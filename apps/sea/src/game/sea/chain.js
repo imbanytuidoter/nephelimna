@@ -111,7 +111,7 @@ export function createSeaChain({ rpcUrl, address, key }) {
     async cast(cell, depth, bait, onStage = () => {}) {
       onStage("Sealing your bait");
       const enc = await encrypt([packChoice(depth, bait)]);
-      const receipt = await send("cast", [cell, enc.encryptedValues[0], enc.inputProof], SEA.castGas, (turn) => onStage(turn ? "Line out on Sepolia" : "Behind your last line"));
+      const receipt = await send("cast", [cell, enc.encryptedValues[0], enc.inputProof], SEA.castGas, (turn) => onStage(turn ? "Line out on Sepolia" : "Waiting for your last cast"));
       onStage("Reading your catch");
       const handles = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "castResult", args: [account.address], blockNumber: receipt.blockNumber }));
       const clear = await retry(DECRYPT_TRIES, () => sdk.decryption.decryptValues(handles.map((encryptedValue) => ({ encryptedValue, contractAddress: address })), { timeout: DECRYPT_TIMEOUT_MS }));

@@ -432,6 +432,16 @@ describe("sealed casts", () => {
     expect(stepRod(rod, 0.016, { held: true, pressed: true }, world).events).toEqual(["hooked"]);
   });
 
+  test("lifting the anchor while a sealed line waits leaves it on chain instead of losing it", () => {
+    let left = 0;
+    const world = { ...base, resolve: () => ({ pending: true }), verdict: () => null, leave: () => left++ };
+    const { rod } = flyTo(world);
+    const step = stepRod(rod, 0.016, { held: false, pressed: false }, { ...world, canFish: false });
+    expect(step.events).toEqual(["line-left"]);
+    expect(step.rod.pending).toBe(false);
+    expect(left).toBe(1);
+  });
+
   test("an empty, netted or failed answer reels the line in with its own message", () => {
     for (const event of ["empty", "snagged", "chain-failed"]) {
       const world = { ...base, resolve: () => ({ pending: true }), verdict: () => ({ caught: false, event }) };

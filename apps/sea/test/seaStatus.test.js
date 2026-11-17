@@ -17,7 +17,7 @@ describe("sea status", () => {
   test("tells a new player where to cast and that the first cast puts the boat on chain", () => {
     const view = describeSea(snap(), local());
     expect(view.phase).toBe("open");
-    expect(view.line).toBe("Sealed sea · 7 anglers");
+    expect(view.line).toBe("Nephelimna · 7 anglers");
     expect(view.detail).toContain("Cast inside the chart squares");
     expect(view.canPost).toBe(false);
   });

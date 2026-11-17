@@ -13,8 +13,13 @@ export interface Saved {
 export function createSaves(file: string | null) {
   const entries = new Map<string, Saved>();
   if (file && existsSync(file)) {
-    const raw = JSON.parse(readFileSync(file, "utf8")) as Record<string, Saved>;
-    for (const [id, saved] of Object.entries(raw)) entries.set(id, saved);
+    try {
+      const raw = JSON.parse(readFileSync(file, "utf8")) as Record<string, Saved>;
+      for (const [id, saved] of Object.entries(raw)) entries.set(id, saved);
+    } catch (error) {
+      renameSync(file, `${file}.broken-${Date.now()}`);
+      console.error("saves file was unreadable and was set aside", error);
+    }
   }
 
   const flush = () => {

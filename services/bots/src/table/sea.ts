@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { SEA } from "@nephelimna/rules";
 import { type Hex, parseEventLogs } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -42,10 +42,27 @@ export function toEvents(logs: Parameters<typeof parseEventLogs>[0]["logs"]): Se
   return events;
 }
 
+/** A crash mid write used to leave half a JSON file that stopped the keeper on every restart, so a broken file is set aside and the logs are read again from the start block. */
+function loadSaved(config: Config, log: (entry: Record<string, unknown>) => void): Saved {
+  const fresh: Saved = { cursor: config.startBlock, board: emptyBoard() };
+  if (!existsSync(config.stateFile)) return fresh;
+  try {
+    return JSON.parse(readFileSync(config.stateFile, "utf8")) as Saved;
+  } catch (error) {
+    renameSync(config.stateFile, `${config.stateFile}.broken-${Date.now()}`);
+    log({ event: "state-reset", error: String(error).slice(0, 160) });
+    return fresh;
+  }
+}
+
 export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Record<string, unknown>) => void) {
   const keeper = privateKeyToAccount(config.keeperKey);
-  let saved: Saved = existsSync(config.stateFile) ? (JSON.parse(readFileSync(config.stateFile, "utf8")) as Saved) : { cursor: config.startBlock, board: emptyBoard() };
-  const persist = () => writeFileSync(config.stateFile, JSON.stringify(saved));
+  let saved: Saved = loadSaved(config, log);
+  const persist = () => {
+    const temp = `${config.stateFile}.tmp`;
+    writeFileSync(temp, JSON.stringify(saved));
+    renameSync(temp, config.stateFile);
+  };
   const backoff = createTableBackoff();
   let generated = 0;
   let busy: string | null = null;

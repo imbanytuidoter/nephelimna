@@ -35,7 +35,7 @@ const UNIT = new THREE.Vector3(1, 1, 1);
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 
 const LAND_LEVEL = -0.4;
-const HELM_LABEL = "Drop anchor and fish (G)";
+const keyed = (label, key, touch) => (touch ? label : `${label} (${key})`);
 
 export function createGame({ camera, canvas, scene, floaters, patchMaterial, water, touch, onStaticChanged, rocks }) {
   const site = harbourSite();
@@ -107,7 +107,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
     camera.up.set(0, 1, 0);
     camera.updateProjectionMatrix();
     crosshair.hidden = !deck;
-    modeButton.textContent = deck ? "Weigh anchor, take the helm (G)" : HELM_LABEL;
+    modeButton.textContent = deck ? keyed("Weigh anchor, take the helm", "G", touch) : keyed("Drop anchor and fish", "G", touch);
     document.body.classList.toggle("on-deck", deck);
   };
   let dropping = false;
@@ -116,7 +116,7 @@ export function createGame({ camera, canvas, scene, floaters, patchMaterial, wat
     if (!pov.active && Math.abs(body.vel.dot(fwd)) > DECK.anchorSpeed) {
       dropping = !dropping;
       helm.brake = dropping;
-      modeButton.textContent = dropping ? "Dropping anchor, slowing down (G cancels)" : HELM_LABEL;
+      modeButton.textContent = dropping ? keyed("Dropping anchor", "G to cancel", touch) : keyed("Drop anchor and fish", "G", touch);
       if (dropping) audio.play("anchor", 0.5);
       return;
     }

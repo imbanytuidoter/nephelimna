@@ -24,7 +24,7 @@ export function createRename({ presence }) {
     e.preventDefault();
     const name = presence.rename(input.value);
     if (!name) {
-      status.textContent = "That name will not work. Use 2 to 20 letters, digits, spaces, dots, dashes or apostrophes.";
+      status.textContent = "That name will not work. Use 2 to 20 letters, digits, spaces, dots, hyphens or apostrophes.";
       return;
     }
     dialog.close();

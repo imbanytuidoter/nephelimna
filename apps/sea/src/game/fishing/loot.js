@@ -8,7 +8,7 @@ export function rollLoot(random, hold) {
   }
   if (roll < 0.85) return { kind: "twin", twin: LOOT.twin, text: `Twin hook: your next ${LOOT.twin} fish count double` };
   if (hold.hasNet) return { kind: "coins", coins: LOOT.netRefund, text: `${LOOT.netRefund} coins` };
-  return { kind: "net", text: "A fishing net. Set it from the port side." };
+  return { kind: "net", text: "A hidden net. Set it in a chart square from the net button." };
 }
 
 export function applyLoot(hold, loot) {
