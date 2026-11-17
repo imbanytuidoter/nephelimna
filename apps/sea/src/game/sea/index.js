@@ -34,6 +34,43 @@ function newKey() {
   return `0x${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 }
 
+const PROOF_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>';
+
+function cell(...children) {
+  const td = document.createElement("td");
+  td.append(...children);
+  return td;
+}
+
+function tag(name, className, text) {
+  const node = document.createElement(name);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function boardRow(row) {
+  const tr = document.createElement("tr");
+  if (row.mine) tr.className = "mine";
+  const rank = tag("span", `rank rank-${row.rank}`, String(row.rank));
+  const angler = tag("div", "angler");
+  const avatar = tag("span", "avatar", row.name.trim().charAt(0).toUpperCase() || "?");
+  avatar.style.background = `hsl(${parseInt(row.player.slice(2, 6), 16) % 360} 62% 68%)`;
+  angler.append(avatar, tag("b", "", row.name));
+  if (row.mine) angler.append(tag("em", "", "You"));
+  const score = tag("td", "score");
+  score.append(tag("b", "", String(row.score)), tag("small", "", "pts"));
+  const proof = tag("a", "proof");
+  proof.href = `${EXPLORER}${row.tx}`;
+  proof.target = "_blank";
+  proof.rel = "noopener";
+  proof.title = "Open the transaction that checked this score";
+  proof.setAttribute("aria-label", `Proof for ${row.name}`);
+  proof.innerHTML = PROOF_ICON;
+  tr.append(cell(rank), cell(angler), score, cell(proof));
+  return tr;
+}
+
 export function createSea({ baseUrl, cellName, nameOf }) {
   const api = new URL(`${baseUrl}api/`, window.location.href);
   const el = (id) => document.getElementById(id);
@@ -59,7 +96,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
   let nets = [];
   let myCasts = [];
   let lastPaint = 0;
-  let boardKey = "";
+  let boardKey = null;
   const notes = [];
   const say = (text) => notes.push(text);
 
@@ -207,25 +244,8 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     const key = rows.map((row) => `${row.player}:${row.score}`).join("|");
     if (key === boardKey) return;
     boardKey = key;
-    boardList.replaceChildren(
-      ...rows.map((row) => {
-        const item = document.createElement("li");
-        if (row.mine) item.className = "mine";
-        const rank = document.createElement("i");
-        rank.textContent = String(row.rank);
-        const name = document.createElement("span");
-        name.textContent = row.mine ? `${row.name} (you)` : row.name;
-        const score = document.createElement("a");
-        score.href = `${EXPLORER}${row.tx}`;
-        score.target = "_blank";
-        score.rel = "noopener";
-        score.textContent = `${row.score} pts`;
-        score.title = "Open the transaction that checked this score";
-        item.append(rank, name, score);
-        return item;
-      }),
-    );
-    boardNote.textContent = rows.length ? "Each score was opened with a Zama KMS proof that the contract checked. Tap a score to see its transaction." : "Nobody has posted a score yet. Be the first.";
+    boardList.replaceChildren(...rows.map(boardRow));
+    boardNote.textContent = rows.length ? "Open a proof to see the transaction that checked the score." : "Nobody has posted a score yet. Be the first.";
   }
 
   postButton.addEventListener("click", () => void post());

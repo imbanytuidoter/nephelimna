@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FIGHT_RULES } from "./fight.js";
+import { ROD } from "./rod.js";
 
 const PALETTE = {
   water: [new THREE.Color("#2b93a6"), new THREE.Color("#176475"), new THREE.Color("#0c4352")],
@@ -41,6 +42,10 @@ const SETTLE = 9;
 const TURN = 6;
 const CHEST_HALF = 0.1;
 const CHEST_LIFT = 0.45;
+const APPROACH = 0.8;
+const LEAVE = 0.7;
+const PECK = 0.12;
+const SHADOW_LENGTH = 0.42;
 const KELP = 7;
 const RAYS = 5;
 const LINE_PHASES = new Set(["waiting", "take", "fight", "landed", "lost", "retrieving"]);
@@ -354,7 +359,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   const flat = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   let shown = false;
   let jiggle = 0;
-  let peck = 0;
+  let visitor = null;
   let fish = null;
   let away = 0;
   let lastText = "";
@@ -438,8 +443,10 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
     goal.copy(hookPos);
     swim.value = 1;
     if (rod.phase === "waiting") {
-      const near = ease(clamp01(rod.time / Math.max(0.1, rod.wait - rod.nibbles * 0.85 + 0.6)));
-      const gap = lerp(2.4, 0.1, near) - Math.sin(peck * Math.PI) * 0.09;
+      const arrive = (rod.nibbles > 0 ? rod.nibbleAt : rod.wait) - APPROACH;
+      const near = ease(clamp01(rod.time / Math.max(0.1, arrive)));
+      const peck = catchPeck(rod);
+      const gap = lerp(2.4, 0.1, near) - peck * 0.09;
       goal.x = hookPos.x + fish.from * (length * 0.5 + gap);
       goal.y = hookPos.y + lerp(-0.45, -0.01, near) + Math.sin(t * 2) * 0.012;
       goal.z = lerp(-1.1, 0, near);
@@ -490,16 +497,52 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
     return "Under your float";
   };
 
-  const stepShadows = (dt, pending, hookPos, t) => {
+  const pickVisitor = (hookPos) => {
+    let best = shadows[0];
+    for (const shadow of shadows) if (Math.abs(shadow.y) < Math.abs(best.y)) best = shadow;
+    const x = best.mesh.position.x - hookPos.x;
+    return { shadow: best, side: x >= 0 ? 1 : -1, hitAt: null };
+  };
+
+  const visitWeight = (rod, t) => {
+    if (!visitor) return { weight: 0, peck: 0 };
+    if (visitor.hitAt === null) {
+      const ahead = Math.max(0, rod.nibbleAt - rod.time);
+      return { weight: ease(1 - clamp01(ahead / APPROACH)), peck: Math.exp(-((ahead / PECK) ** 2)) };
+    }
+    const after = t - visitor.hitAt;
+    return { weight: ease(1 - clamp01((after - 0.15) / LEAVE)), peck: Math.exp(-((after / PECK) ** 2)) };
+  };
+
+  const stepShadows = (dt, rod, hookPos, t) => {
+    const pending = rod.pending;
+    if (!pending) visitor = null;
+    if (pending && !visitor && rod.nibbleAt - rod.time < APPROACH) visitor = pickVisitor(hookPos);
+    const visit = pending ? visitWeight(rod, t) : { weight: 0, peck: 0 };
+    if (visitor && visitor.hitAt !== null && visit.weight <= 0) visitor = null;
     for (const shadow of shadows) {
       shadow.angle += dt * shadow.speed * (pending ? 1 : 2.2);
       const reach = shadow.radius * (1 + away * 2.5);
       const x = hookPos.x + Math.cos(shadow.angle) * reach;
       const z = -0.7 + Math.sin(shadow.angle) * reach * 0.8;
-      const heading = Math.atan2(-Math.cos(shadow.angle) * 0.8, -Math.sin(shadow.angle));
+      let heading = Math.atan2(-Math.cos(shadow.angle) * 0.8, -Math.sin(shadow.angle));
+      spot.set(x, hookPos.y + shadow.y + Math.sin(t * 0.7 + shadow.angle) * 0.04, z);
+      if (visitor?.shadow === shadow) {
+        const gap = 0.02 + (1 - visit.peck) * 0.1;
+        goal.set(hookPos.x + visitor.side * (SHADOW_LENGTH * 0.5 + gap), hookPos.y - 0.01, 0);
+        spot.lerp(goal, visit.weight);
+        const face = visitor.side > 0 ? Math.PI : 0;
+        heading += Math.atan2(Math.sin(face - heading), Math.cos(face - heading)) * visit.weight;
+      }
       shadow.mesh.visible = !fish;
-      place(shadow.mesh, spot.set(x, hookPos.y + shadow.y + Math.sin(t * 0.7 + shadow.angle) * 0.04, z), heading, 0.42, Math.sin(t * 1.3 + shadow.radius) * 0.08);
+      place(shadow.mesh, spot, heading, SHADOW_LENGTH, Math.sin(t * 1.3 + shadow.radius) * 0.08);
     }
+  };
+
+  const catchPeck = (rod) => {
+    let peck = 0;
+    for (let j = 0; j < rod.nibbles; j++) peck = Math.max(peck, Math.exp(-(((rod.time - (rod.nibbleAt + j * ROD.nibbleGap)) / PECK) ** 2)));
+    return peck;
   };
 
   return {
@@ -511,6 +554,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
         document.body.classList.toggle("line-out", visible);
         if (!visible) {
           fish = null;
+          visitor = null;
           away = 0;
         }
       }
@@ -520,12 +564,10 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       setDepth(depth);
       for (const event of events) {
         if (event !== "nibble") continue;
-        if (!fish) continue;
         jiggle = 0.45;
-        peck = 1;
+        if (rod.pending && visitor) visitor.hitAt = t;
       }
       jiggle = Math.max(0, jiggle - dt);
-      peck = Math.max(0, peck - dt * 3);
       if (rod.catch && !fish) fish = { rarity: rod.catch.species.rarity, from: Math.sin(t * 3.7) > 0 ? 1 : -1, view: new THREE.Vector3(), yaw: 0, placed: false, startLine: null };
       if (!rod.catch && !rod.pending && rod.phase !== "landed") away = Math.min(1, away + dt);
       const shake = reducedMotion ? 0 : 1;
@@ -541,7 +583,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       chest.visible = false;
       if (fish) stageCatch(dt, t, rod, depth, hookPos, shake);
       shadowSwim.value = rod.pending ? 1.2 : 2.2;
-      stepShadows(dt, rod.pending, hookPos, t);
+      stepShadows(dt, rod, hookPos, t);
 
       hook.position.copy(hookPos);
       const fighting = rod.phase === "fight" && rod.fight;
