@@ -57,6 +57,15 @@ const NOTES = {
   take: "It took the bait. Strike now!",
 };
 const MAX_LINES = 3;
+const STAGE_SHORT = {
+  Starting: "Starting",
+  "Getting test ETH": "Getting ETH",
+  "Putting your boat on chain": "Joining",
+  "Sealing your bait": "Sealing",
+  "Line out on Sepolia": "On chain",
+  "Waiting for your last cast": "In queue",
+  "Reading your catch": "Decrypting",
+};
 const TROPHY_SIZE = { common: 0.5, uncommon: 0.65, rare: 0.85, mythic: 1.2, chest: 1 };
 
 const fwd = new THREE.Vector3();
@@ -135,7 +144,8 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
   const chips = () => {
     depthButtons.forEach((button, index) => button.setAttribute("aria-checked", String(index === depth)));
     baitButtons.forEach((button, index) => button.setAttribute("aria-checked", String(index === bait)));
-    baitHint.textContent = `Catches ${BAITS[bait].hint}`;
+    baitButtons.forEach((button, index) => (button.title = `Catches ${BAITS[index].hint}`));
+    baitHint.textContent = BAITS[bait].hint;
   };
   let locked = null;
   const lockTackle = (value) => {
@@ -509,7 +519,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       audio.loop("reel", reeling || rod.phase === "retrieving" ? 0.55 : 0, reeling ? 0.8 + 0.4 * (1 - Math.min(1, tension)) : 1.2);
       audio.loop("drag", fighting && fight.slipping ? 0.7 : 0, 1);
 
-      const label = rod.pending ? (ticket ? `${ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : (PROMPT[rod.phase] ?? "");
+      const label = rod.pending ? (ticket ? `${STAGE_SHORT[ticket.stage] ?? ticket.stage} ${Math.floor((Date.now() - ticket.startedAt) / 1000)}s` : "Checking") : (PROMPT[rod.phase] ?? "");
       const prompt = fighting && ["run", "coil", "jump"].includes(fight.mode) ? "Let it run" : label;
       if (actionLabel.textContent !== prompt) actionLabel.textContent = prompt;
       lockTackle(rod.phase !== "idle");
@@ -520,18 +530,21 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       action.style.setProperty("--gauge", gauge.toFixed(3));
       action.style.setProperty("--gauge-colour", fighting ? (strain > 0.92 ? "#ff4a3a" : strain > 0.6 ? "#f0b04a" : "#8fd6c8") : "#f2f6f4");
       const line = fighting ? `${Math.max(0, fight.line - FIGHT_RULES.landRadius).toFixed(0)} m to the boat` : rod.phase === "charging" ? `${Math.round(castDistance(rod.charge))} m` : "";
-      const linesOut = lines.length ? `${lines.length} sealed ${lines.length === 1 ? "line" : "lines"} out. ` : "";
-      const detail = rod.pending ? "Hold to leave it and cast again" : rod.phase === "idle" ? `${linesOut}Hold to aim, let go to cast` : line;
+      const linesOut = lines.length ? `${lines.length} ${lines.length === 1 ? "line" : "lines"} out` : "Hold, then let go";
+      const detail = rod.pending ? "Hold to cast again" : rod.phase === "idle" ? linesOut : line;
+      if (action.title !== (rod.pending ? ticket?.stage ?? "" : "")) action.title = rod.pending ? ticket?.stage ?? "" : "";
       if (actionDetail.textContent !== detail) actionDetail.textContent = detail;
       if (time > noteUntil && message.textContent) message.textContent = "";
-      const twinText = market.hold.twin > 0 ? `Twin hook from a chest: your next ${market.hold.twin} fish count double` : "";
+      const twinText = market.hold.twin > 0 ? `x2 on your next ${market.hold.twin} fish` : "";
       if (bonus.textContent !== twinText) bonus.textContent = twinText;
-      const netState = !market.hold.hasNet ? ["Buy a net", `${NET.price} coins at the market`] : [sea.netsOut() ? "Hidden net set" : "Set hidden net", "Scores rivals' small catches, 1 hour"];
+      const netState = !market.hold.hasNet ? ["Net", `${NET.price} coins`, `Buy a hidden net at the fish market for ${NET.price} coins`] : sea.netsOut() ? ["Net", "Out", "Your hidden net is set for an hour"] : ["Net", "Set 1 h", "Set a hidden net in this square for an hour. Rivals' common and uncommon catches here score three times for you"];
       const netKey = netState.join("|");
       if (netButton.dataset.key !== netKey) {
         netButton.dataset.key = netKey;
         netTitle.textContent = netState[0];
         netDetail.textContent = netState[1];
+        netButton.title = netState[2];
+        netButton.setAttribute("aria-label", netState[2]);
       }
     },
   };

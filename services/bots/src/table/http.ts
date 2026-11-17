@@ -1,6 +1,6 @@
 import { type IncomingMessage, type ServerResponse, createServer } from "node:http";
 import { type Hex, isAddress } from "viem";
-import { createPresence } from "./presence.js";
+import { type Presence, createPresence } from "./presence.js";
 import { createSaves } from "./saves.js";
 
 const WINDOW_MS = 600_000;
@@ -41,6 +41,7 @@ export interface Routes {
   readonly dailyDrips: number;
   readonly savesFile?: string | null;
   readonly log: (entry: Record<string, unknown>) => void;
+  readonly presence?: Presence;
 }
 
 export function createLimiter(limit: number, windowMs: number) {
@@ -110,7 +111,7 @@ export function createHttp(routes: Routes) {
   const dripByIpDaily = createLimiter(DRIPS_PER_IP_DAILY, DAY_MS);
   const rpcByIp = createLimiter(RPC_PER_MINUTE, 60_000);
   const presenceByIp = createLimiter(PRESENCE_PER_MINUTE, 60_000);
-  const presence = createPresence();
+  const presence = routes.presence ?? createPresence();
   const savesByIp = createLimiter(SAVES_PER_MINUTE, 60_000);
   const saves = createSaves(routes.savesFile ?? null);
 

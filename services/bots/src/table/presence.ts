@@ -72,5 +72,11 @@ export function createPresence() {
       sweep(now);
       return boats.size;
     },
+    ids(now: number): string[] {
+      sweep(now);
+      return [...boats.keys()];
+    },
   };
 }
+
+export type Presence = ReturnType<typeof createPresence>;

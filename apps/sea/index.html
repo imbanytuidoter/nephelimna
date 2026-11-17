@@ -334,6 +334,7 @@
     #board td:first-child { width: 44px; border-radius: 12px 0 0 12px; }
     #board td:last-child { width: 44px; border-radius: 0 12px 12px 0; text-align: right; }
     #board tr.mine td { background: rgba(240, 195, 122, 0.14); }
+    #board tr.group td { padding: 14px 10px 4px; background: none; font: 700 11px ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #2fb3b3; }
     #board tr.mine td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
     .rank { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 800 13px ui-sans-serif, system-ui, sans-serif; background: rgba(255, 255, 255, 0.08); }
     .rank-1 { color: #2a1d05; background: linear-gradient(160deg, #ffe39a, #d9a441); }
@@ -391,6 +392,33 @@
     @media (pointer: coarse) and (orientation: portrait) { #rotate { display: flex; } }
     @media (prefers-reduced-motion: reduce) { #rotate svg { animation: none; } }
     @media (prefers-reduced-motion: reduce) { .hint { transition: none; } }
+    #fishing { gap: 8px; }
+    #fish-bonus { align-self: flex-end; padding: 4px 10px; border-radius: 999px; font: 800 11px/1.2 ui-monospace, Menlo, monospace; letter-spacing: 0.04em; color: #1d1404; background: var(--accent); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+    #fishing .tackle { gap: 8px; padding: 10px; border-radius: 18px; background: rgba(8, 20, 24, 0.66); box-shadow: inset 0 0 0 1px rgba(242, 246, 244, 0.08), 0 10px 30px rgba(0, 0, 0, 0.28); }
+    #fishing .tackle-row { gap: 5px; }
+    #fishing .tackle-label { font-size: 10px; color: rgba(242, 246, 244, 0.55); }
+    #fishing .seg { padding: 3px; border-radius: 12px; background: rgba(0, 0, 0, 0.32); }
+    #fishing .seg button { min-height: 38px; border-radius: 9px; font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+    #fishing .seg button[aria-checked="true"] { box-shadow: 0 2px 8px rgba(240, 195, 122, 0.35); }
+    #fishing .tackle-hint { margin: 0 2px; font-size: 11px; color: rgba(242, 246, 244, 0.55); }
+    #fishing .fish-buttons { grid-template-columns: 78px 1fr; gap: 8px; }
+    #fishing #fish-net { min-height: 78px; padding: 8px 4px; border-radius: 18px; align-items: center; justify-content: center; text-align: center; gap: 3px; background: rgba(8, 20, 24, 0.66); }
+    #fishing #fish-net:hover { box-shadow: inset 0 0 0 1px rgba(240, 195, 122, 0.5); }
+    .net-icon { width: 26px; height: 26px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    #fishing .net-title { padding: 0; font: 800 13px/1 ui-sans-serif, system-ui, sans-serif; }
+    #fishing .net-detail { font: 600 10px/1.2 ui-monospace, Menlo, monospace; opacity: 0.7; white-space: nowrap; }
+    #fishing #fish-net kbd { top: 5px; right: 5px; }
+    #fishing #fish-action { min-height: 78px; padding: 8px 12px; border-radius: 18px; }
+    #fishing #fish-action:has(kbd) { padding-top: 8px; }
+    #fishing #fish-action-label { font-size: 20px; letter-spacing: -0.01em; }
+    #fishing #fish-action.busy #fish-action-label { font-size: 15px; font-variant-numeric: tabular-nums; }
+    #fishing #fish-action-detail { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+    #fishing #fish-action kbd { top: 6px; right: 8px; }
+    @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+    #fishing #fish-action.busy { background: linear-gradient(var(--accent), var(--accent)) padding-box, conic-gradient(from var(--spin), #ffffff 0 22%, rgba(8, 16, 19, 0.55) 0) border-box; animation: spin 1.4s linear infinite; }
+    @keyframes spin { to { --spin: 360deg; } }
+    @media (prefers-reduced-motion: reduce) { #fishing #fish-action.busy { animation: none; } }
+    @media (max-height: 520px) { #fishing #fish-net, #fishing #fish-action { min-height: 62px; } #fishing .seg button { min-height: 34px; } #fishing .tackle-hint { display: none; } }
     .mobile .key, .mobile kbd { display: none; }
     @media (max-height: 520px) {
       #hud-game .gauge, #hud-game .nav, #sea, #fishing, #help, #mode-toggle, #trade-prompt, #catch-card, #hud-game .hint { zoom: 0.78; }
@@ -455,7 +483,7 @@
       </div>
     </section>
     <div class="fish-buttons">
-      <button id="fish-net" type="button"><span class="net-title"></span><span class="net-detail"></span><kbd>N</kbd></button>
+      <button id="fish-net" type="button"><svg class="net-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c6 3.2 12 3.2 18 0M3 11c6 3.2 12 3.2 18 0M3 17c6 3.2 12 3.2 18 0M7 5.6v14M12 6.4v14M17 5.6v14" /></svg><span class="net-title"></span><span class="net-detail"></span><kbd>N</kbd></button>
       <button id="fish-action" type="button"><span id="fish-action-label">Cast</span><span id="fish-action-detail"></span><kbd>Space</kbd></button>
     </div>
   </div>

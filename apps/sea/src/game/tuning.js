@@ -47,8 +47,6 @@ export const CAMERA = {
   follow: 2.6,
   lift: 1.5,
   speedPull: 0.22,
-  recenterDelay: 2.2,
-  recenterRate: 1.6,
   minAboveWater: 0.9,
 };
 

@@ -1,6 +1,7 @@
 const CELLS = 64;
 const COLUMNS = "ABCDEFGH";
 const BOARD_ROWS = 5;
+const AI_ROWS = 3;
 const BUBBLES = 18;
 const STATE_URL = "/sea/api/state";
 const EXPLORER = "https://sepolia.etherscan.io/tx/";
@@ -147,6 +148,14 @@ function boardRow(entry) {
   return tr;
 }
 
+function groupRow(label) {
+  const tr = node("tr", undefined, "group");
+  const td = node("td", label);
+  td.colSpan = 3;
+  tr.append(td);
+  return tr;
+}
+
 function emptyRow(message) {
   const tr = node("tr", undefined, "empty");
   const td = node("td", message);
@@ -169,10 +178,14 @@ async function refresh() {
     countTo($("stat-casts"), Number(state.casts ?? 0));
     countTo($("stat-posted"), board.length);
     ticker(Array.isArray(state.recent) ? state.recent : [], now);
-    const key = board.slice(0, BOARD_ROWS).map((entry) => `${entry.player}:${entry.score}`).join("|");
+    const rank = (list, limit) => list.slice(0, limit).map((entry, i) => ({ ...entry, rank: i + 1 }));
+    const people = rank(board.filter((entry) => !entry.bot), BOARD_ROWS);
+    const ai = rank(board.filter((entry) => entry.bot), AI_ROWS);
+    const key = [...people, ...ai].map((entry) => `${entry.player}:${entry.score}`).join("|");
     if (rows && key !== boardKey) {
       boardKey = key;
-      rows.replaceChildren(...(board.length ? board.slice(0, BOARD_ROWS).map(boardRow) : [emptyRow("No scores posted yet. Yours could be the first row.")]));
+      const top = people.length ? people.map(boardRow) : [emptyRow("No people on the board yet. Yours could be the first row.")];
+      rows.replaceChildren(...top, ...(ai.length ? [groupRow("AI anglers"), ...ai.map(boardRow)] : []));
     }
   } catch (error) {
     console.warn("sea state not loaded", error);

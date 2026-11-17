@@ -21,11 +21,6 @@ export function createChaseCamera(camera) {
         rig.baseY = body.pos.y;
         rig.ready = true;
       }
-      if (look.lookAge > CAMERA.recenterDelay) {
-        const k = ease(CAMERA.recenterRate, dt);
-        look.lookYaw -= look.lookYaw * k;
-        look.lookPitch -= look.lookPitch * k;
-      }
       rig.yaw += wrap(heading - rig.yaw) * ease(CAMERA.follow, dt);
       rig.baseY += (body.pos.y - rig.baseY) * ease(CAMERA.lift, dt);
 

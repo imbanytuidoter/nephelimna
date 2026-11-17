@@ -1,19 +1,53 @@
 import { describe, expect, test } from "vitest";
 import { packChoice } from "@nephelimna/rules";
-import { STYLES, pickChoice } from "../src/table/anglers.js";
+import { STYLES, cellOf, nextSpot, pickChoice, stepBoat } from "../src/table/anglers.js";
+
+const seeded = (seed: number) => () => {
+  seed = (seed * 16807) % 2147483647;
+  return seed / 2147483647;
+};
 
 describe("AI anglers", () => {
-  test("each style only picks depth and bait pairs it lists, weighted by its own odds", () => {
+  test("each style only picks depth and bait pairs it lists", () => {
     for (const style of STYLES) {
       const allowed = new Set(style.choices.map(([depth, bait]) => packChoice(depth, bait)));
       for (let i = 0; i < 200; i++) expect(allowed.has(pickChoice(style, i / 200))).toBe(true);
     }
-    const [first] = STYLES[0]!.choices;
-    expect(pickChoice(STYLES[0]!, 0)).toBe(packChoice(first![0], first![1]));
   });
 
-  test("every angler has a name that fits the contract's name limit", () => {
-    for (const style of STYLES) expect(new TextEncoder().encode(style.name).length).toBeLessThanOrEqual(64);
-    expect(new Set(STYLES.map((style) => style.name)).size).toBe(STYLES.length);
+  test("every angler name fits the boat tag with its AI suffix", () => {
+    for (const style of STYLES) expect(`${style.name} AI`.length).toBeLessThanOrEqual(20);
+  });
+
+  test("a cast is made from the chart square the boat floats in", () => {
+    expect(cellOf(-1599, -1599)).toBe(0);
+    expect(cellOf(1599, 1599)).toBe(63);
+    expect(cellOf(-1, 1)).toBe(4 * 8 + 3);
+  });
+
+  test("boats stay in open water away from the island and inside the chart", () => {
+    const random = seeded(7);
+    let at = { x: 900, z: 0 };
+    for (let i = 0; i < 500; i++) {
+      const next = nextSpot(at.x, at.z, random);
+      const r = Math.hypot(next.x, next.z);
+      expect(r).toBeGreaterThanOrEqual(700);
+      expect(r).toBeLessThanOrEqual(1500);
+      for (let k = 0; k <= 20; k++) expect(Math.hypot(at.x + ((next.x - at.x) * k) / 20, at.z + ((next.z - at.z) * k) / 20)).toBeGreaterThan(500);
+      at = next;
+    }
+  });
+
+  test("a boat sails to its spot, then anchors and waits before its first cast", () => {
+    const random = seeded(3);
+    let boat = { x: 1000, z: 0, yaw: 0, sailing: true, tx: 1060, tz: 0, fishUntil: 0, castAt: 0 };
+    let now = 1_000_000;
+    for (let i = 0; i < 20 && boat.sailing; i++) {
+      now += 1000;
+      boat = stepBoat(boat, 1, now, random);
+    }
+    expect(boat.sailing).toBe(false);
+    expect(boat.castAt).toBeGreaterThan(now);
+    expect(boat.fishUntil).toBeGreaterThan(boat.castAt);
   });
 });

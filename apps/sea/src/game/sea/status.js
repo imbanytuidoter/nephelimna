@@ -14,3 +14,8 @@ export function markBoard(rows, me) {
   const mine = me?.toLowerCase();
   return rows.map((row) => ({ ...row, name: row.name ?? `Angler ${row.player.slice(2, 6).toLowerCase()}`, mine: row.player.toLowerCase() === mine }));
 }
+
+export function groupBoard(rows) {
+  const rank = (list) => list.map((row, i) => ({ ...row, rank: i + 1 }));
+  return { people: rank(rows.filter((row) => !row.bot)), ai: rank(rows.filter((row) => row.bot)) };
+}

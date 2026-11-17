@@ -281,3 +281,6 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 7px; border-radius: 6
   .card, .card img, .grid span { transition: none; }
 }
 @media (max-width: 860px) { .sealed .wrap { row-gap: 72px; } }
+
+.board tr.group td { padding: 16px 12px 4px; background: none; font: 700 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); }
+.board tr.group ~ tr .rank { background: rgba(47, 179, 179, 0.16) !important; color: var(--ink) !important; }
