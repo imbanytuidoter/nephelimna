@@ -12,6 +12,16 @@ const LOG_SPAN = 400n;
 const SPANS_PER_TICK = 10;
 /** The RPC balances across nodes, and one a few blocks behind refuses a log range past its own head, so the log reader trails the head by a few blocks. */
 const LOG_LAG = 4n;
+const RECENT = 12;
+const BLOCK_MS = 12_000;
+
+interface Recent {
+  readonly key: string;
+  readonly player: Hex;
+  readonly cell: number | null;
+  readonly block: number;
+  readonly at: number;
+}
 
 export interface Snapshot {
   readonly sea: Hex;
@@ -23,6 +33,7 @@ export interface Snapshot {
   readonly posting: readonly Hex[];
   readonly board: readonly Row[];
   readonly busy: string | null;
+  readonly recent: readonly (Recent & { readonly name: string | null })[];
 }
 
 interface Saved {
@@ -35,7 +46,7 @@ export function toEvents(logs: Parameters<typeof parseEventLogs>[0]["logs"]): Se
   for (const log of parseEventLogs({ abi, logs })) {
     const base = { player: (log.args as { player: Hex }).player, block: Number(log.blockNumber), tx: log.transactionHash, index: log.logIndex };
     if (log.eventName === "Joined") events.push({ ...base, kind: "joined" });
-    else if (log.eventName === "CastMade") events.push({ ...base, kind: "cast" });
+    else if (log.eventName === "CastMade") events.push({ ...base, kind: "cast", cell: Number(log.args.cell) });
     else if (log.eventName === "ScorePostRequested") events.push({ ...base, kind: "requested", name: log.args.name });
     else if (log.eventName === "ScorePosted") events.push({ ...base, kind: "posted", score: Number(log.args.score) });
   }
@@ -66,6 +77,23 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
   const backoff = createTableBackoff();
   let generated = 0;
   let busy: string | null = null;
+  let recent: readonly Recent[] = [];
+  let seeded = false;
+  const noteRecent = (events: readonly SeaEvent[], at: (block: number) => number = () => Date.now()) => {
+    const known = new Set(recent.map((entry) => entry.key));
+    const casts = events.filter((event) => event.kind === "cast" && !known.has(`${event.tx}:${event.index ?? 0}`)).map((event) => ({ key: `${event.tx}:${event.index ?? 0}`, player: event.player, cell: event.kind === "cast" ? (event.cell ?? null) : null, block: event.block, at: at(event.block) }));
+    if (casts.length) recent = [...casts.reverse(), ...recent].sort((a, b) => b.block - a.block).slice(0, RECENT);
+  };
+
+  /** Recent casts live only in memory, so after a restart the last span of blocks is read once to give the live feed something to show. */
+  async function seedRecent() {
+    seeded = true;
+    const head = await chain.publicClient.getBlockNumber();
+    const from = head > LOG_SPAN ? head - LOG_SPAN : 0n;
+    const logs = await chain.publicClient.getLogs({ address: chain.table, fromBlock: from, toBlock: head });
+    const now = Date.now();
+    noteRecent(toEvents(logs), (block) => now - Number(head - BigInt(block)) * BLOCK_MS);
+  }
 
   async function readLogs() {
     const head = (await chain.publicClient.getBlockNumber()) - LOG_LAG;
@@ -73,7 +101,9 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
     for (let i = 0; i < SPANS_PER_TICK && from <= head; i++) {
       const to = head - from > LOG_SPAN ? from + LOG_SPAN : head;
       const logs = await chain.publicClient.getLogs({ address: chain.table, fromBlock: from, toBlock: to });
-      saved = { cursor: Number(to + 1n), board: applyEvents(saved.board, toEvents(logs)) };
+      const events = toEvents(logs);
+      noteRecent(events);
+      saved = { cursor: Number(to + 1n), board: applyEvents(saved.board, events) };
       persist();
       from = to + 1n;
     }
@@ -116,6 +146,7 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
       }
       return;
     }
+    if (!seeded) await seedRecent().catch((error: unknown) => log({ event: "recent-seed-skipped", error: String(error).slice(0, 160) }));
     await readLogs().catch((error: unknown) => log({ event: "log-read-skipped", error: String(error).slice(0, 160) }));
     for (const player of saved.board.pending) await confirm(player);
   }
@@ -131,6 +162,7 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
       casts: board.casts,
       posting: board.pending,
       board: rankBoard(board),
+      recent: recent.map((entry) => ({ ...entry, name: board.names[entry.player.toLowerCase()] ?? null })),
       busy,
     };
   }

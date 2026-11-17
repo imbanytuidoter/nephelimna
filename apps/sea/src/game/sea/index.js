@@ -60,6 +60,7 @@ function boardRow(row) {
   avatar.style.background = `hsl(${parseInt(row.player.slice(2, 6), 16) % 360} 62% 68%)`;
   angler.append(avatar, tag("b", "", row.name));
   if (row.mine) angler.append(tag("em", "", "You"));
+  else if (row.bot) angler.append(tag("em", "bot", "AI angler"));
   const score = tag("td", "score");
   score.append(tag("b", "", String(row.score)), tag("small", "", "pts"));
   const proof = tag("a", "proof");

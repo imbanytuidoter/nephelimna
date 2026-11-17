@@ -5,8 +5,10 @@ import { createChain } from "./chain.js";
 import { readConfig } from "./config.js";
 import { createHttp } from "./http.js";
 import { createSeaKeeper } from "./sea.js";
+import { createAnglers } from "./anglers.js";
 
 const TICK_MS = 2500;
+const ANGLER_TICK_MS = 15_000;
 const ERROR_PAUSE_MS = 6000;
 
 const log = (entry: Record<string, unknown>) => process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), ...entry })}\n`);
@@ -14,6 +16,11 @@ const config = readConfig(process.env);
 const keeperAccount = privateKeyToAccount(config.keeperKey);
 const chain = createChain(config.rpcUrl, config.table, keeperAccount);
 const keeper = createSeaKeeper(config, chain, log);
+const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, log);
+const state = () => {
+  const snapshot = keeper.snapshot();
+  return { ...snapshot, board: snapshot.board.map((row) => ({ ...row, bot: anglers.isBot(row.player) })), recent: snapshot.recent.map((entry) => ({ ...entry, name: entry.name ?? anglers.nameOf(entry.player), bot: anglers.isBot(entry.player) })) };
+};
 let stopping = false;
 
 async function loop(name: string, run: () => Promise<void>, everyMs: number) {
@@ -41,9 +48,10 @@ async function drip(address: Hex) {
   return { ok: true };
 }
 
-const server = createHttp({ state: keeper.snapshot, drip, rpcUrl: config.rpcUrl, dailyDrips: config.dailyDrips, savesFile: join(dirname(config.stateFile), "saves.json"), log });
+const server = createHttp({ state, drip, rpcUrl: config.rpcUrl, dailyDrips: config.dailyDrips, savesFile: join(dirname(config.stateFile), "saves.json"), log });
 server.listen(config.port, "127.0.0.1", () => log({ event: "listening", port: config.port, sea: config.table, keeper: keeperAccount.address }));
 void loop("keeper", keeper.tick, TICK_MS);
+void loop("anglers", anglers.tick, ANGLER_TICK_MS);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {

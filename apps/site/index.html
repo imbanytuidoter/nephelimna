@@ -32,9 +32,11 @@
         <source srcset="/site/hero-small.webp" media="(max-width: 800px)">
         <img src="/site/hero.webp" alt="A small fishing boat on clear turquoise water with sea grass below and a pale blue sky" width="1600" height="900" fetchpriority="high">
       </picture>
+      <div class="caustics" aria-hidden="true"></div>
+      <div class="bubbles" id="bubbles" aria-hidden="true"></div>
       <div class="wrap">
         <p class="eyebrow">A 3D fishing game on Zama FHEVM</p>
-        <h1 id="hero-title">Fish a sea <em>nobody</em> can see into.</h1>
+        <h1 id="hero-title" class="rise"><span>Fish a sea</span> <em>nobody</em> <span>can see into.</span></h1>
         <p class="lead">Every square of the lake is encrypted on chain. You pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read your catch, and your score stays sealed until you choose to open it.</p>
         <div class="cta">
           <a class="btn btn-main" href="/sea/"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>Play in the browser</a>
@@ -47,12 +49,22 @@
           <li>Phone and desktop</li>
         </ul>
       </div>
+      <svg class="waves" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+        <path class="w1" d="M0 70 C 180 40 360 100 540 70 S 900 40 1080 70 S 1440 100 1440 70 V120 H0 Z" />
+        <path class="w2" d="M0 86 C 200 60 400 112 600 86 S 1000 60 1200 86 S 1440 108 1440 86 V120 H0 Z" />
+      </svg>
     </section>
+
+    <div class="live" aria-label="Recent sealed casts">
+      <div class="wrap live-head"><span class="pulse" aria-hidden="true"></span><b>Live on the water</b><span id="live-count" class="live-count"></span></div>
+      <div class="ticker"><div class="ticker-track" id="ticker"><span class="tick muted">Waiting for the next cast on Sepolia</span></div></div>
+    </div>
 
     <section class="sealed" id="sealed" aria-labelledby="sealed-title">
       <div class="wrap">
-        <div class="chart reveal" aria-hidden="true">
+        <div class="chart reveal">
           <div class="grid" id="grid"></div>
+          <p class="chart-hint" id="chart-hint">Tap a square. Nobody knows what is in it.</p>
           <div class="chart-tag a"><b>Your cast</b>square public, depth and bait sealed</div>
           <div class="chart-tag b"><b>63 sealed squares</b>fish, stock and the Leviathan</div>
         </div>
@@ -148,7 +160,7 @@
         <div class="reveal">
           <p class="eyebrow">Leaderboard</p>
           <h2 id="board-title">Proven scores only.</h2>
-          <p class="lead" style="margin-top: 16px">A score shows here only after the contract checked a Zama decryption proof for it. Every row links to that transaction.</p>
+          <p class="lead spaced">A score shows here only after the contract checked a Zama decryption proof for it. Every row links to that transaction.</p>
           <div class="stats">
             <div><b id="stat-anglers">0</b><span>Anglers</span></div>
             <div><b id="stat-casts">0</b><span>Sealed casts</span></div>
@@ -160,7 +172,7 @@
             <thead><tr><th scope="col">#</th><th scope="col">Angler</th><th scope="col">Score</th></tr></thead>
             <tbody id="board-rows"><tr class="empty"><td colspan="3">Reading the board from the chain</td></tr></tbody>
           </table>
-          <p class="board-note">Live from the sealed sea on Sepolia.</p>
+          <p class="board-note"><span class="pulse" aria-hidden="true"></span>Live from the sealed sea on Sepolia. AI anglers fish here too, and their scores go through the same proof.</p>
         </div>
       </div>
     </section>

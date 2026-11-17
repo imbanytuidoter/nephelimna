@@ -13,7 +13,7 @@ interface Base {
 
 export type SeaEvent =
   | (Base & { readonly kind: "joined" })
-  | (Base & { readonly kind: "cast" })
+  | (Base & { readonly kind: "cast"; readonly cell?: number })
   | (Base & { readonly kind: "requested"; readonly name: string })
   | (Base & { readonly kind: "posted"; readonly score: number });
 
