@@ -11,6 +11,7 @@ const FUND_WEI = 10_000_000_000_000_000n;
 const FUND_CHECKS = 10;
 const FUND_CHECK_MS = 3000;
 const POST_AFTER = [6, 12] as const;
+const FIRST_POST = 2;
 const CAST_GAP_S = [150, 330] as const;
 const FISH_FOR_S = [360, 840] as const;
 const SAIL_SPEED = 6;
@@ -35,6 +36,9 @@ export const STYLES: readonly Style[] = [
   { name: "Brine Owl", choices: [[0, 0, 3], [1, 1, 2], [2, 0, 2]] },
   { name: "Kelpie", choices: [[0, 0, 4], [0, 1, 2], [1, 0, 2]] },
   { name: "Salt Wren", choices: [[1, 0, 3], [2, 0, 2], [0, 1, 2]] },
+  { name: "Dara Quill", choices: [[0, 0, 4], [1, 0, 2], [1, 1, 1]] },
+  { name: "Tomas Reed", choices: [[1, 0, 3], [0, 1, 2], [2, 1, 1]] },
+  { name: "Ines Lowe", choices: [[0, 1, 3], [1, 1, 2], [0, 0, 2]] },
 ];
 
 export interface Boat {
@@ -101,7 +105,7 @@ export function stepBoat(boat: Boat, dt: number, now: number, random: Random): B
 }
 
 function firstBoat(index: number, random: Random): Boat {
-  const angle = (index / STYLES.length) * Math.PI * 2 + random() * 0.5;
+  const angle = (index / STYLES.length) * Math.PI * 2 + random() * 0.4;
   const radius = between(OPEN_WATER_FROM + 100, OPEN_WATER_TO - 100, random());
   const x = Math.cos(angle) * radius;
   const z = Math.sin(angle) * radius;
@@ -133,8 +137,10 @@ function loadRetired(file: string): Set<string> {
 }
 
 export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, random: Random = Math.random) {
-  const fresh = (): Bot[] => STYLES.map((_, style) => ({ key: generatePrivateKey(), style, joined: false, casts: 0, postAt: Math.round(between(...POST_AFTER, random())) }));
-  let bots: Bot[] = (loadBots(file, log) ?? fresh()).map((bot, i) => ({ ...bot, boat: bot.boat ?? firstBoat(i, random) }));
+  const fresh = (style: number): Bot => ({ key: generatePrivateKey(), style, joined: false, casts: 0, postAt: FIRST_POST });
+  const loaded = loadBots(file, log) ?? [];
+  const missing = STYLES.map((_, style) => style).filter((style) => !loaded.some((bot) => bot.style === style));
+  let bots: Bot[] = [...loaded, ...missing.map(fresh)].map((bot, i) => ({ ...bot, boat: bot.boat ?? firstBoat(i, random) }));
   const persist = () => {
     const temp = `${file}.tmp`;
     writeFileSync(temp, JSON.stringify(bots), { mode: 0o600 });
