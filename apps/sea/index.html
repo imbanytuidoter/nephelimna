@@ -418,6 +418,30 @@
     @keyframes spin { to { --spin: 360deg; } }
     @media (prefers-reduced-motion: reduce) { #fishing #fish-action.busy { animation: none; } }
     @media (max-height: 520px) { #fishing #fish-net, #fishing #fish-action { min-height: 62px; } #fishing .seg button { min-height: 34px; } #fishing .tackle-hint { display: none; } }
+    @media (max-height: 520px) {
+      :is(#board, #guide) { max-height: 94vh; flex-direction: column; }
+      :is(#board, #guide)[open] { display: flex; }
+      :is(#board, #guide) .board-head { padding: 10px 14px 6px; }
+      #board .board-head h2, #guide .board-head h2 { font-size: 18px; }
+      :is(#board, #guide) .board-head small { font-size: 10px; }
+      :is(#board-close, #guide-close) { width: 40px !important; min-height: 40px !important; height: 40px; }
+      #board .board-lead { display: none; }
+      #board .board-frame { max-height: none; flex: 1; min-height: 0; padding: 0 10px 10px; }
+      #board td { padding: 6px 8px; }
+      #board .rank { width: 26px; height: 26px; font-size: 12px; }
+      #board .angler .avatar { display: none; }
+      #board .proof { width: 30px; height: 30px; }
+      #board #board-note { display: none; }
+      #guide .guide-body { max-height: none; flex: 1; min-height: 0; padding: 0 12px 12px; }
+      .guide-steps li { padding: 8px 10px 8px 44px; }
+      .guide-steps li::before { top: 8px; width: 24px; height: 24px; }
+      :is(#progress, #rename) { max-height: 94vh; overflow-y: auto; padding: 12px 14px; }
+      :is(#progress, #rename) h2 { font-size: 16px; margin-bottom: 6px; }
+      :is(#progress, #rename) p { margin-bottom: 8px; font-size: 12px; }
+      :is(#progress, #rename) .warn { padding: 8px 10px; }
+      :is(#progress, #rename) .row { margin-bottom: 8px; }
+      :is(#progress, #rename) :is(input, button) { min-height: 40px; }
+    }
     .mobile .key, .mobile kbd { display: none; }
     @media (max-height: 520px) {
       #hud-game .gauge, #hud-game .nav, #sea, #fishing, #help, #mode-toggle, #trade-prompt, #catch-card, #hud-game .hint { zoom: 0.78; }
