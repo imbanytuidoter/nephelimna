@@ -9,6 +9,8 @@
   <link rel="icon" href="/site/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/site/apple-touch-icon.png">
   <style>
+    body.view > *:not(canvas) { display: none !important; }
+    body.view canvas { pointer-events: none; }
     :root { --ink: #f2f6f4; --shade: rgba(8, 16, 19, 0.46); --accent: #f0c37a; }
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; }
     body { font: 500 14px/1.3 ui-sans-serif, system-ui, "Segoe UI", sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; }
@@ -513,7 +515,7 @@
   <dialog id="progress" aria-labelledby="progress-title">
     <h2 id="progress-title">Your progress code</h2>
     <p class="warn">Write this code down or copy it somewhere safe. It is the only way to get your progress back if you clear your browser data or switch device. We cannot recover it for you.</p>
-    <p>Coins, fish, net and position are kept in this browser and backed up on our server. Keep the code private: anyone who has it can load your save.</p>
+    <p>Coins, fish, net and position are kept in this browser and backed up on our server. Your sealed score stays with the boat key in this browser and is not part of the code. Keep the code private: anyone who has it can load your save.</p>
     <div class="row"><input id="progress-code" readonly aria-label="Your progress code"><button id="progress-copy" type="button">Copy</button></div>
     <p>Restore on this or another device:</p>
     <div class="row"><input id="progress-enter" placeholder="Paste a code" autocomplete="off" spellcheck="false" aria-label="Code to restore"><button id="progress-restore" type="button">Restore</button></div>
@@ -554,12 +556,12 @@
         <li><b>Anchor in a chart square</b><span>Sail into the squares on the chart, then drop anchor. Only casts inside the squares count.</span></li>
         <li><b>Pick depth and bait</b><span>Each fish lives at one depth. Worm catches common and uncommon fish, spoon catches uncommon to mythic, live fish only mythic. The Leviathan waits at the bottom.</span></li>
         <li><b>Cast</b><span>Hold the Cast button to aim, let go to throw. Each cast is a sealed transaction on Sepolia. Nobody can see what lives under a square, not even our server.</span></li>
-        <li><b>Wait for the bite</b><span>Zama decrypts your result for you in 15 to 45 seconds. Watch the float and the window under the water.</span></li>
-        <li><b>Strike and reel</b><span>When the fish takes the bait, tap Strike. Hold to reel, let go when the line turns red or it snaps.</span></li>
+        <li><b>Wait for the bite</b><span>Zama decrypts your result for you in 15 to 60 seconds. Watch the float and the window under the water.</span></li>
+        <li><b>Strike and reel</b><span>When the fish takes the bait, tap Strike. Hold to reel, let go when the line turns red, or it snaps.</span></li>
         <li><b>Leave lines out</b><span>Hold the button while you wait to leave the line on chain and cast again. Up to three lines can wait at once.</span></li>
         <li><b>Set a hidden net</b><span>Buy a net at the fish market. After three casts you can set it in a square for an hour. When a rival lands a common or uncommon fish there, you score it three times.</span></li>
         <li><b>Post your score</b><span>Your total stays encrypted. Post it to open it with a Zama proof and join the leaderboard. Each new post needs a new cast.</span></li>
-        <li><b>Sell and save</b><span>Sell fish at the market for coins. Save code keeps your boat and hold if you switch device.</span></li>
+        <li><b>Sell and save</b><span>Sell fish at the market for coins. Save code keeps your coins, hold and spot at sea if you switch device. Your sealed score stays with the boat key in this browser.</span></li>
       </ol>
     </div>
   </dialog>

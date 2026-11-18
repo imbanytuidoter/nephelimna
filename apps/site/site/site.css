@@ -296,3 +296,5 @@ kbd { display: inline-block; min-width: 24px; padding: 3px 7px; border-radius: 6
   .hero .wrap { padding-top: 56vh; }
   .chart-tag { display: none; }
 }
+.hero-live { border: 0; opacity: 0; transition: opacity 1.6s ease; animation: none; transform: none; background: none; pointer-events: none; }
+.hero-live.on { opacity: 1; }

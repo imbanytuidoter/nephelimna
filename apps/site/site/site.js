@@ -181,12 +181,38 @@ async function refresh() {
   }
 }
 
+const LIVE_URL = "/sea/?view";
+const LIVE_MESSAGE = "nephelimna-view";
+
 const video = $("hero-video");
 if (video && calm) {
   video.removeAttribute("autoplay");
   video.pause();
 }
 
+function canRenderLive() {
+  if (calm || navigator.connection?.saveData) return false;
+  const gl = document.createElement("canvas").getContext("webgl2");
+  if (!gl) return false;
+  gl.getExtension("WEBGL_lose_context")?.loseContext();
+  return true;
+}
+
+function liveHero() {
+  const frame = $("hero-live");
+  const hero = frame?.closest(".hero");
+  if (!frame || !hero || !canRenderLive()) return;
+  const tell = (run) => frame.contentWindow?.postMessage({ type: LIVE_MESSAGE, run }, location.origin);
+  addEventListener("message", (event) => {
+    if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.type !== LIVE_MESSAGE || !event.data.ready) return;
+    frame.classList.add("on");
+    frame.addEventListener("transitionend", () => video?.pause(), { once: true });
+  });
+  new IntersectionObserver(([entry]) => tell(entry.isIntersecting)).observe(hero);
+  frame.src = LIVE_URL;
+}
+
+liveHero();
 bubbles();
 chart();
 reveals();

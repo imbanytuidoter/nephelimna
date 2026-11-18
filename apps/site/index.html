@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Nephelimna · fishing on a sealed sea</title>
+  <title>Nephelimna · a fishing game on an encrypted sea</title>
   <meta name="description" content="A 3D fishing game where every square of the sea is encrypted with Zama FHEVM. You cast blind, the contract decides what bites, and only you can read your catch.">
   <meta name="theme-color" content="#061217">
   <meta property="og:title" content="Nephelimna">
@@ -13,7 +13,7 @@
   <link rel="icon" href="/site/logo.svg" type="image/svg+xml">
   <link rel="icon" href="/site/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/site/apple-touch-icon.png">
-  <link rel="stylesheet" href="/site/site.css?v=13">
+  <link rel="stylesheet" href="/site/site.css?v=14">
 </head>
 <body>
   <header class="top" id="top">
@@ -35,12 +35,13 @@
         <source src="/site/hero-once.webm" type="video/webm">
         <source src="/site/hero-once.mp4" type="video/mp4">
       </video>
+      <iframe class="hero-media hero-live" id="hero-live" title="Live view of the harbour" tabindex="-1" aria-hidden="true"></iframe>
       <div class="caustics" aria-hidden="true"></div>
       <div class="bubbles" id="bubbles" aria-hidden="true"></div>
       <div class="wrap">
         <p class="eyebrow">A 3D fishing game on Zama FHEVM</p>
         <h1 id="hero-title" class="rise"><span>Fish a sea</span> <em>nobody</em> <span>can see into.</span></h1>
-        <p class="lead">Every square of the lake is encrypted on chain. You pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read your catch, and your score stays sealed until you choose to open it.</p>
+        <p class="lead">Every square of the sea is encrypted on chain. You pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read your catch, and your score stays sealed until you choose to open it.</p>
         <div class="cta">
           <a class="btn btn-main" href="/sea/"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>Play in the browser</a>
           <a class="btn btn-ghost" href="/docs/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg>How to play</a>
@@ -73,11 +74,11 @@
         </div>
         <div class="reveal">
           <p class="eyebrow">What is sealed</p>
-          <h2 id="sealed-title">The lake is encrypted. So is your luck.</h2>
+          <h2 id="sealed-title">The sea is encrypted. So is your luck.</h2>
           <ul class="points">
             <li>
               <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-              <div><h3>Squares nobody can read</h3><p>Each of the 64 squares holds three depths of fish drawn from encrypted randomness on chain. Not the players, not the keeper, not our server knows what lives where.</p></div>
+              <div><h3>Squares nobody can read</h3><p>Each of the 64 squares holds three depths of fish drawn from encrypted randomness on chain. Nobody knows what lives where: not the players, not the keeper, not our server.</p></div>
             </li>
             <li>
               <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg></span>
@@ -100,7 +101,7 @@
         </div>
         <ol class="steps">
           <li class="reveal"><h3>Seal the bait</h3><p>The game encrypts your depth and bait for this contract and your session key.</p><span class="time">in the browser</span></li>
-          <li class="reveal"><h3>Cast on Sepolia</h3><p>One transaction. The contract picks the layer, checks the bait and updates your total, all on encrypted values.</p><span class="time">about 10 to 20 s</span></li>
+          <li class="reveal"><h3>Cast on Sepolia</h3><p>One transaction. The contract reads the layer at your depth, checks the bait and updates your total, all on encrypted values.</p><span class="time">about 10 to 20 s</span></li>
           <li class="reveal"><h3>Read your catch</h3><p>Only your key may decrypt the result. A fish swims to your hook in the window under the water.</p><span class="time">about 5 to 40 s</span></li>
           <li class="reveal"><h3>Strike and reel</h3><p>Hook it when it takes the bait and keep the line from snapping. Leave the line out and cast again if you like.</p><span class="time">your skill</span></li>
         </ol>
@@ -141,7 +142,7 @@
             <img src="/site/chest.webp" alt="Underwater view of a wooden chest lifted from the sand on a fishing line" width="960" height="720" loading="lazy">
             <span class="tag">Sunken chests</span>
             <h3>Depth, bait and loot</h3>
-            <p>Each fish lives at one depth and takes one kind of bait. Empty casts sometimes bring up a chest.</p>
+            <p>Each fish lives at one depth and bites on certain baits. Empty casts sometimes bring up a chest.</p>
             <div class="baits"><span><b>Worm</b>common, uncommon</span><span><b>Spoon</b>uncommon to mythic</span><span><b>Live fish</b>mythic only</span></div>
           </article>
           <article class="card c4 reveal">
@@ -177,7 +178,7 @@
             <thead><tr><th scope="col">#</th><th scope="col">Angler</th><th scope="col">Score</th></tr></thead>
             <tbody id="board-rows"><tr class="empty"><td colspan="3">Reading the board from the chain</td></tr></tbody>
           </table>
-          <p class="board-note"><span class="pulse" aria-hidden="true"></span>Live from the sealed sea on Sepolia. AI anglers sail and fish only while people are at sea, through the same proof.</p>
+          <p class="board-note"><span class="pulse" aria-hidden="true"></span>Live from Sepolia. AI anglers sail and fish only while people are at sea, and their scores go through the same proof.</p>
         </div>
       </div>
     </section>
@@ -205,6 +206,6 @@
     </div>
   </footer>
 
-  <script type="module" src="/site/site.js?v=13"></script>
+  <script type="module" src="/site/site.js?v=14"></script>
 </body>
 </html>

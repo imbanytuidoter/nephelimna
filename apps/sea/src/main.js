@@ -21,6 +21,7 @@ import { FLOATER_KINDS } from './ocean/scene/floaterMeshes.js';
 import { FloaterShadow } from './ocean/scene/floaterShadow.js';
 import { WaveCaustics } from './ocean/water/Caustics.js';
 import { createGame } from './game/index.js';
+import { createView } from './game/view.js';
 import { waveScaleAt } from './game/sea.js';
 import { SEA } from './game/tuning.js';
 
@@ -42,12 +43,15 @@ document.body.appendChild(renderer.domElement);
 // measured on an Adreno 732 to hold 60 fps; ?mobile / ?desktop force either
 const args = new URLSearchParams(location.search);
 const debug = args.has('debug');
+const view = args.has('view');
 const mobile = args.has('mobile') || (!args.has('desktop') && matchMedia('(pointer: coarse)').matches);
 const quality = mobile
   ? { resolution: 0.6, msaa: 2, reflections: true, reflectionScale: 0.35, autoResolution: true }
   : { resolution: 1, msaa: 4, reflections: true, reflectionScale: 0.5 };
+if (view) quality.autoResolution = true;
 document.body.classList.toggle('mobile', mobile);
-if (mobile) addEventListener('pointerdown', () => screen.orientation?.lock?.('landscape').catch(() => {}), { once: true });
+document.body.classList.toggle('view', view);
+if (mobile && !view) addEventListener('pointerdown', () => screen.orientation?.lock?.('landscape').catch(() => {}), { once: true });
 document.body.classList.toggle('debug', debug);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.5, 80000);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -595,7 +599,15 @@ function tick(now) {
   if (now - lastHud > 500) updateHud(now);
 }
 
+const VIEW_READY_FRAMES = 90;
+let viewRunning = true, viewFrames = 0;
+addEventListener('message', (event) => {
+  if (event.origin !== location.origin || event.data?.type !== 'nephelimna-view') return;
+  viewRunning = event.data.run !== false;
+});
 function loop(now) {
+  if (view && !viewRunning) { last = now; requestAnimationFrame(loop); return; }
+  if (view && ++viewFrames === VIEW_READY_FRAMES) parent.postMessage({ type: 'nephelimna-view', ready: true }, location.origin);
   if (uncapped) { spin(); return; }
   if (auto.cap30 && (auto.odd = !auto.odd)) { requestAnimationFrame(loop); return; }
   if (benchmarking) last = now;
@@ -635,11 +647,12 @@ if (debug) {
   setSun(34, 205);
   Object.assign(ocean.params, { waveScale: waveScaleAt(0), swellScale: SEA.swellScale });
   ocean.dirty = true;
-  game = createGame({
+  const world = {
     camera, canvas: renderer.domElement, scene, floaters, patchMaterial: terrain.patchProp,
-    water: su, touch: mobile, onStaticChanged: () => (renderer.shadowMap.needsUpdate = true),
+    water: su, touch: mobile, light: mobile, onStaticChanged: () => (renderer.shadowMap.needsUpdate = true),
     rocks: terrain.rocks,
-  });
+  };
+  game = view ? createView(world) : createGame(world);
   window.app.game = game;
   game.fishing.setResolution(...renderer.getDrawingBufferSize(new THREE.Vector2()).toArray());
 }
