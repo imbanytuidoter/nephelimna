@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>How to play · Nephelimna</title>
+  <meta name="description" content="How to play Nephelimna: controls, depths and baits, sealed casts, hidden nets, the Leviathan and posting a proven score.">
+  <meta name="theme-color" content="#061217">
+  <link rel="canonical" href="https://nephelimna.imbanytui.xyz/docs/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Nephelimna">
+  <meta property="og:url" content="https://nephelimna.imbanytui.xyz/docs/">
+  <meta property="og:title" content="How to play Nephelimna">
+  <meta property="og:description" content="The player guide: casting and waiting, depths and baits, strike and reel, hidden nets, the Leviathan and posting a proven score on Sepolia.">
+  <meta property="og:image" content="https://nephelimna.imbanytui.xyz/site/og-docs-2.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Underwater view of a fish on a hook, with the title How to play Nephelimna">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How to play Nephelimna">
+  <meta name="twitter:description" content="The player guide: casting and waiting, depths and baits, strike and reel, hidden nets, the Leviathan and posting a proven score on Sepolia.">
+  <meta name="twitter:image" content="https://nephelimna.imbanytui.xyz/site/og-docs-2.jpg">
+  <meta name="twitter:image:alt" content="Underwater view of a fish on a hook, with the title How to play Nephelimna">
+  <link rel="icon" href="/site/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/site/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/site/apple-touch-icon.png">
+  <link rel="stylesheet" href="/site/site.css?v=4">
+</head>
+<body>
+  <header class="top solid" id="top">
+    <div class="wrap">
+      <a class="brand" href="/"><img class="brand-logo" src="/site/logo.svg" alt="" width="34" height="34">Nephelimna</a>
+      <nav class="links" aria-label="Main">
+        <a href="/#sealed">What is sealed</a>
+        <a href="/#board">Leaderboard</a>
+        <a href="/docs/" aria-current="page">How to play</a>
+      </nav>
+      <a class="btn btn-main" href="/sea/">Play</a>
+    </div>
+  </header>
+
+  <div class="wrap docs">
+    <nav class="toc" aria-label="On this page">
+      <p>On this page</p>
+      <a href="#start">Getting started</a>
+      <a href="#controls">Controls</a>
+      <a href="#fish">Depths, baits, points</a>
+      <a href="#cast">Casting and waiting</a>
+      <a href="#fight">Strike and reel</a>
+      <a href="#lines">Leaving lines out</a>
+      <a href="#nets">Hidden nets</a>
+      <a href="#leviathan">The Leviathan</a>
+      <a href="#score">Posting your score</a>
+      <a href="#market">Market, chests, saves</a>
+      <a href="#privacy">What is public</a>
+      <a href="#faq">Questions</a>
+    </nav>
+
+    <main class="doc">
+      <p class="eyebrow">Player guide</p>
+      <h1>How to play</h1>
+      <p class="lead">Nephelimna is a fishing game on a sea whose contents are encrypted on chain with Zama FHEVM. Below is how a cast works, what each control does and how a score gets onto the leaderboard.</p>
+
+      <section id="start">
+        <h2>Getting started</h2>
+        <ol>
+          <li>Open <a href="/sea/">the game</a> on a phone in landscape or on a desktop browser with WebGL2.</li>
+          <li>You start at the helm of a small boat. Sail into the squares drawn on the chart. Only casts inside a square count.</li>
+          <li>Drop anchor. The view moves to the deck and the fishing panel opens.</li>
+          <li>Pick a depth and a bait, then cast. Your first cast inside a square gives your boat free test ETH and puts it on chain. That takes about a minute once.</li>
+        </ol>
+        <div class="callout"><p>The game keeps a session key in your browser instead of a wallet. If you clear browser data, the boat and its sealed score are gone. <strong>Save code</strong> brings back your coins, hold and position, but not the boat key.</p></div>
+      </section>
+
+      <section id="controls">
+        <h2>Controls</h2>
+        <div class="table">
+          <table>
+            <thead><tr><th scope="col">Action</th><th scope="col">Desktop</th><th scope="col">Phone</th></tr></thead>
+            <tbody>
+              <tr><td>Steer and throttle</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Left thumb stick</td></tr>
+              <tr><td>Drop or weigh anchor</td><td><kbd>G</kbd></td><td>Top button</td></tr>
+              <tr><td>Look around on deck</td><td>Click the sea, then move the mouse</td><td>Drag with the right thumb</td></tr>
+              <tr><td>Aim and cast</td><td>Hold <kbd>Space</kbd> or <kbd>F</kbd>, let go</td><td>Hold the Cast button, let go</td></tr>
+              <tr><td>Strike</td><td>Tap <kbd>Space</kbd></td><td>Tap the big button</td></tr>
+              <tr><td>Reel</td><td>Hold <kbd>Space</kbd></td><td>Hold the big button</td></tr>
+              <tr><td>Depth</td><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Depth buttons</td></tr>
+              <tr><td>Bait</td><td><kbd>B</kbd></td><td>Bait buttons</td></tr>
+              <tr><td>Set a hidden net</td><td><kbd>N</kbd></td><td>Net button</td></tr>
+              <tr><td>Chart</td><td><kbd>M</kbd></td><td>Tap the round map</td></tr>
+              <tr><td>Your hold</td><td><kbd>I</kbd></td><td>Coins button</td></tr>
+              <tr><td>Trade at the fish market</td><td><kbd>E</kbd> near the market</td><td>Trade button near the market</td></tr>
+              <tr><td>Show or hide controls</td><td><kbd>H</kbd></td><td>Controls button</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="fish">
+        <h2>Depths, baits and points</h2>
+        <p>Every square has three layers: surface, middle and bottom. Each layer holds at most one kind of fish, or nothing. The deeper you go, the better the odds of rare and mythic fish.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th scope="col">Depth</th><th scope="col">Empty</th><th scope="col">Common</th><th scope="col">Uncommon</th><th scope="col">Rare</th><th scope="col">Mythic</th></tr></thead>
+            <tbody>
+              <tr><td>Surface</td><td>37%</td><td>31%</td><td>19%</td><td>13%</td><td>0%</td></tr>
+              <tr><td>Middle</td><td>31%</td><td>25%</td><td>25%</td><td>13%</td><td>6%</td></tr>
+              <tr><td>Bottom</td><td>25%</td><td>19%</td><td>25%</td><td>19%</td><td>13%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Baits</h3>
+        <div class="table">
+          <table>
+            <thead><tr><th scope="col">Bait</th><th scope="col">Bites</th><th scope="col">Good for</th></tr></thead>
+            <tbody>
+              <tr><td>Worm</td><td>Common, uncommon</td><td>Steady points near the surface</td></tr>
+              <tr><td>Spoon</td><td>Uncommon, rare, mythic</td><td>Middle and bottom</td></tr>
+              <tr><td>Live fish</td><td>Mythic only</td><td>The bottom, and the Leviathan</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Points</h3>
+        <div class="table">
+          <table>
+            <thead><tr><th scope="col">Catch</th><th scope="col">Sealed points</th><th scope="col">Market price</th></tr></thead>
+            <tbody>
+              <tr><td>Common</td><td>1</td><td>6 coins</td></tr>
+              <tr><td>Uncommon</td><td>3</td><td>14 coins</td></tr>
+              <tr><td>Rare</td><td>8</td><td>38 coins</td></tr>
+              <tr><td>Mythic</td><td>25</td><td>300 coins</td></tr>
+              <tr><td>Leviathan</td><td>100</td><td>2000 coins</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A square that gives up a fish is restocked at once with a fresh sealed roll, so nobody can farm a known spot. A wrong bait leaves the square as it was.</p>
+      </section>
+
+      <section id="cast">
+        <h2>Casting and waiting</h2>
+        <p>Hold the Cast button to aim. The longer you hold, the farther the line flies. Let go to cast. Inside a chart square this sends one sealed transaction:</p>
+        <ol>
+          <li><strong>Sealing your bait.</strong> Your depth and bait are encrypted in the browser.</li>
+          <li><strong>Line out on Sepolia.</strong> The contract compares them with the square on encrypted values and adds the points to your sealed total.</li>
+          <li><strong>Reading your catch.</strong> Zama decrypts the result for your key only.</li>
+        </ol>
+        <p>The whole trip usually takes 15 to 60 seconds. While you wait, the window under the water shows dark shapes circling the hook. The sonar may also tell you that a rare fish or the Leviathan is in a square next to yours.</p>
+      </section>
+
+      <section id="fight">
+        <h2>Strike and reel</h2>
+        <p>When the answer is a fish, it swims to your hook and nibbles. The float twitches with every nibble. When it takes the bait the button flashes <strong>Strike</strong>. Tap within about two seconds.</p>
+        <p>If you miss, the fish comes back and tries again. The chain has already counted it, so you still get it.</p>
+        <p>Once hooked, hold to reel. Watch the ring around the button and the line in the underwater window. When it turns red the line is about to snap, so let go while the fish runs and reel again when it tires.</p>
+      </section>
+
+      <section id="lines">
+        <h2>Leaving lines out</h2>
+        <p>You do not have to wait for an answer. Hold the button while the line is out to leave it on chain and cast again. Up to three sealed lines can wait at once. When one is answered it surfaces on its own and the catch goes to your hold. A line also stays out by itself after 45 seconds, and when you lift the anchor.</p>
+      </section>
+
+      <section id="nets">
+        <h2>Hidden nets</h2>
+        <p>Buy a net at the fish market for 400 coins, or find one in a chest. Then press the net button inside a square to set it there for one hour.</p>
+        <ul>
+          <li>The square of your net is encrypted. Nobody can see where it is.</li>
+          <li>When a rival lands a common or uncommon fish in that square, the fish goes into your sealed total three times over. The rival only learns that a hidden net took it.</li>
+          <li>Your own casts are never netted by your own nets.</li>
+          <li>You can have two nets out at a time, and the whole sea holds eight.</li>
+          <li>Each net needs three casts first. This keeps anyone from filling every net place with empty accounts.</li>
+        </ul>
+      </section>
+
+      <section id="leviathan">
+        <h2>The Leviathan</h2>
+        <p>One square hides the Leviathan at its bottom layer. Its position is sealed like everything else. Cast live fish at the bottom of that square to land it for 100 points. It then moves to a new sealed square. The sonar warns you when it is in a square next to yours.</p>
+      </section>
+
+      <section id="score">
+        <h2>Posting your score</h2>
+        <p>Your total is encrypted and only you can read it in the top panel. To join the leaderboard, press <strong>Post my score</strong>:</p>
+        <ol>
+          <li>The contract marks your current total for public decryption.</li>
+          <li>The keeper fetches the value from Zama with a decryption proof and sends it back.</li>
+          <li>The contract checks the proof against the stored total and only then writes your score.</li>
+        </ol>
+        <p>It takes about a minute. Every row on the leaderboard links to the transaction that checked it. You can post again later, but each post needs at least one new cast since the last one.</p>
+      </section>
+
+      <section id="market">
+        <h2>Market, chests and saves</h2>
+        <p>Your catch lands in your hold. Sail to the fish market on the island to sell it for coins, then buy a net or flags for your boat. Coins live in your browser and on our save server, not on chain.</p>
+        <p>An empty cast sometimes brings up a sunken chest. Open it from your hold for coins, a net, or a twin hook that counts your next three fish double in the hold.</p>
+        <p><strong>Save code</strong> shows a code that brings your coins, hold and position to another device. Your sealed score stays with the boat key in the browser where you played. Keep the code private: anyone with it can load your save.</p>
+      </section>
+
+      <section id="privacy">
+        <h2>What is public and what is sealed</h2>
+        <div class="table">
+          <table>
+            <thead><tr><th scope="col">Public on Sepolia</th><th scope="col">Sealed</th></tr></thead>
+            <tbody>
+              <tr><td>That you joined and cast, and when</td><td>What lives in every square and layer</td></tr>
+              <tr><td>The square of each cast</td><td>Your depth, your bait and your catch</td></tr>
+              <tr><td>That you set a net</td><td>Where your net is, and whether it took a fish</td></tr>
+              <tr><td>Your score after you post it</td><td>Your total before you post</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Gas and encrypted work are the same for a miss, a catch, a netted catch and the Leviathan, so the transaction itself gives nothing away.</p>
+      </section>
+
+      <section id="faq">
+        <h2>Questions</h2>
+        <h3>Do I need a wallet or real money?</h3>
+        <p>No. The game runs on the Sepolia test network and gives your boat free test ETH.</p>
+        <h3>Why does a cast take so long?</h3>
+        <p>A cast is a real transaction, and the result is decrypted by the Zama network for your key. Leave the line out and cast again while you wait.</p>
+        <h3>Can the server cheat?</h3>
+        <p>The sea is drawn from encrypted randomness inside the contract and nobody holds a key to it. The keeper can only fill the sea once and relay score proofs, which the contract checks. Our service also runs a few bot anglers, which cast through the same contract as everyone else.</p>
+        <h3>Where is the code?</h3>
+        <p>The contract is <a href="https://sepolia.etherscan.io/address/0x05371fD71D88D57c5A6B7419538bF50601237c2E" rel="noopener" target="_blank"><code>0x0537…7c2E</code></a> on Sepolia and the source is on <a href="https://github.com/imbanytuidoter/nephelimna" rel="noopener" target="_blank">GitHub</a>.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <span>Nephelimna</span>
+      <a href="/">Home</a>
+      <a href="/sea/">Play</a>
+      <a href="https://github.com/imbanytuidoter/nephelimna" rel="noopener" target="_blank">Source on GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
