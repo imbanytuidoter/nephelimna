@@ -151,7 +151,7 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
     for (const player of saved.board.pending) await confirm(player);
   }
 
-  function snapshot(): Snapshot {
+  function snapshot(hidden?: (player: string) => boolean): Snapshot {
     const board = saved.board;
     return {
       sea: chain.table,
@@ -161,7 +161,7 @@ export function createSeaKeeper(config: Config, chain: Chain, log: (entry: Recor
       anglers: board.anglers,
       casts: board.casts,
       posting: board.pending,
-      board: rankBoard(board),
+      board: rankBoard(board, undefined, hidden),
       recent: recent.map((entry) => ({ ...entry, name: board.names[entry.player.toLowerCase()] ?? null })),
       busy,
     };

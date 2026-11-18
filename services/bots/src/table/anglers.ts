@@ -143,7 +143,7 @@ function loadRetired(file: string): Set<string> {
   }
 }
 
-export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, random: Random = Math.random) {
+export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, keeperReserveWei = 0n, random: Random = Math.random) {
   const fresh = (style: number): Bot => ({ key: generatePrivateKey(), style, joined: false, casts: 0, postAt: FIRST_POST });
   const loaded = loadBots(file, log) ?? [];
   const missing = STYLES.map((_, style) => style).filter((style) => !loaded.some((bot) => bot.style === style));
@@ -157,7 +157,6 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
   const accounts = bots.map((bot) => privateKeyToAccount(bot.key));
   const names = new Map(accounts.map((account, i) => [account.address.toLowerCase(), STYLES[bots[i]!.style]!.name]));
   const boatIds = accounts.map((account) => account.address.slice(2, 18).toLowerCase());
-  const ownIds = new Set(boatIds);
   const retired = loadRetired(file.replace(/\.json$/, ".retired.json"));
   let busy = false;
   let alone = true;
@@ -171,6 +170,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
   /** Public nodes lag each other, so right after the keeper pays, the node that takes the cast can still see the old balance; the bot waits until its balance shows up. */
   async function fund(address: Hex) {
     if ((await chain.publicClient.getBalance({ address })) >= FUND_FLOOR_WEI) return;
+    if ((await chain.publicClient.getBalance({ address: keeper.address })) < keeperReserveWei + FUND_WEI) throw new Error("keeper is at its reserve");
     await chain.pay(keeper, address, FUND_WEI);
     log({ event: "angler-funded", address });
     for (let i = 0; i < FUND_CHECKS; i++) {
@@ -203,7 +203,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
     update(index, { casts: 0, postAt: Math.round(between(...POST_AFTER, random())) });
   }
 
-  const peopleOnline = (now: number) => presence.ids(now).some((id) => !ownIds.has(id));
+  const peopleOnline = (now: number) => presence.people(now) > 0;
 
   function show(now: number) {
     bots.forEach((bot, i) => presence.update({ id: boatIds[i], name: `${STYLES[bot.style]!.name}${NAME_SUFFIX}`, x: bot.boat!.x, y: 0, z: bot.boat!.z, yaw: bot.boat!.yaw, t: (now % CLOCK_WRAP_MS) / 1000 }, now));
@@ -219,7 +219,11 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
       .catch((error: unknown) => log({ event: "angler-skipped", name: STYLES[bots[ready]!.style]!.name, error: String(error).slice(0, 200) }))
       .finally(() => {
         busy = false;
-        persist();
+        try {
+          persist();
+        } catch (error) {
+          log({ event: "angler-save-failed", error: String(error).slice(0, 200) });
+        }
       });
   }
 

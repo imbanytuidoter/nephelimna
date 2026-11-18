@@ -1,6 +1,8 @@
 const TTL_MS = 8_000;
 const MAX_BOATS = 64;
 const MAX_RETURNED = 32;
+const MAX_PER_OWNER = 4;
+const FLEET = "fleet";
 const WORLD_LIMIT = 20_000;
 const ID_PATTERN = /^[0-9a-f]{16}$/;
 const NAME_LIMIT = 20;
@@ -25,6 +27,7 @@ export interface Boat {
   readonly name: string | null;
   readonly t: number | null;
   readonly at: number;
+  readonly owner: string;
 }
 
 export interface PresenceUpdate {
@@ -51,7 +54,8 @@ export function createPresence() {
   };
 
   return {
-    update(input: PresenceUpdate, now: number): Boat[] | null {
+    /** Ids are public in every reply, so a boat stays with the address that first sent it, and one address holds only a few boats; otherwise anyone could move or remove other boats, or fill the sea with fakes that wake the AI fleet. */
+    update(input: PresenceUpdate, now: number, owner: string = FLEET): Boat[] | null {
       if (typeof input.id !== "string" || !ID_PATTERN.test(input.id)) return null;
       const x = bounded(input.x, WORLD_LIMIT);
       const y = bounded(input.y, 200);
@@ -61,12 +65,15 @@ export function createPresence() {
       const t = bounded(input.t, CLOCK_LIMIT);
       const flag = typeof input.flag === "string" && /^[a-z0-9_-]{1,24}$/.test(input.flag) ? input.flag : null;
       sweep(now);
-      if (!boats.has(input.id) && boats.size >= MAX_BOATS) return null;
-      boats.set(input.id, { id: input.id, x, y, z, yaw, flag, name: cleanName(input.name), t, at: now });
+      const known = boats.get(input.id);
+      if (known && known.owner !== owner) return null;
+      if (!known && boats.size >= MAX_BOATS) return null;
+      if (!known && owner !== FLEET && [...boats.values()].filter((boat) => boat.owner === owner).length >= MAX_PER_OWNER) return null;
+      boats.set(input.id, { id: input.id, x, y, z, yaw, flag, name: cleanName(input.name), t, at: now, owner });
       return [...boats.values()].filter((boat) => boat.id !== input.id).slice(0, MAX_RETURNED);
     },
-    leave(id: string): void {
-      boats.delete(id);
+    leave(id: string, owner: string = FLEET): void {
+      if (boats.get(id)?.owner === owner) boats.delete(id);
     },
     size(now: number): number {
       sweep(now);
@@ -75,6 +82,10 @@ export function createPresence() {
     ids(now: number): string[] {
       sweep(now);
       return [...boats.keys()];
+    },
+    people(now: number): number {
+      sweep(now);
+      return [...boats.values()].filter((boat) => boat.owner !== FLEET).length;
     },
   };
 }

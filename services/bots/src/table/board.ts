@@ -71,8 +71,9 @@ export function applyEvents(state: BoardState, events: readonly SeaEvent[]): Boa
   return { ...next, seen: next.seen.filter((item) => item.block >= top - SEEN_SPAN) };
 }
 
-export function rankBoard(state: BoardState, limit = 50): Row[] {
+export function rankBoard(state: BoardState, limit = 50, hidden: (player: string) => boolean = () => false): Row[] {
   return Object.values(state.entries)
+    .filter((entry) => !hidden(entry.player))
     .sort((a, b) => b.score - a.score || a.block - b.block)
     .slice(0, limit)
     .map((entry, index) => ({ rank: index + 1, ...entry }));

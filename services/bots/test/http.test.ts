@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createLimiter, rpcAllowed, rpcRefusal } from "../src/table/http.js";
+import { clientKey, createLimiter, rpcAllowed, rpcRefusal } from "../src/table/http.js";
 
 describe("table http guards", () => {
   test("lets a key through only up to its limit inside the window", () => {
@@ -28,5 +28,12 @@ describe("table http guards", () => {
     ]);
     expect(rpcRefusal("eth_call")).toBeNull();
     expect(rpcRefusal([])).toBeNull();
+  });
+  test("keys IPv6 clients on their /64 and leaves IPv4 alone", () => {
+    expect(clientKey("2001:db8:1:2:aaaa:bbbb:cccc:dddd")).toBe("2001:db8:1:2::/64");
+    expect(clientKey("2001:db8:1:2:1:1:1:1")).toBe(clientKey("2001:db8:1:2:ffff::1"));
+    expect(clientKey("2001:db8::1")).toBe("2001:db8:0:0::/64");
+    expect(clientKey("::ffff:10.0.0.1")).toBe("10.0.0.1");
+    expect(clientKey("10.0.0.1")).toBe("10.0.0.1");
   });
 });

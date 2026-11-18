@@ -59,18 +59,28 @@ export function createLimiter(limit: number, windowMs: number) {
   };
 }
 
+/** One IPv6 host owns a whole /64, so limits keyed on the full address would let it rotate through endless keys. */
+export function clientKey(ip: string): string {
+  if (!ip.includes(":") || ip.startsWith("::ffff:")) return ip.replace(/^::ffff:/, "");
+  const head = ip.split("::")[0]!.split(":");
+  return `${head.concat(["0", "0", "0", "0"]).slice(0, 4).join(":")}::/64`;
+}
+
 function clientIp(request: IncomingMessage): string {
   const forwarded = request.headers["x-forwarded-for"];
   const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim();
-  return first || request.socket.remoteAddress || "local";
+  return clientKey(first || request.socket.remoteAddress || "local");
 }
+
+class BadRequest extends Error {}
+class TooLarge extends Error {}
 
 async function readBody(request: IncomingMessage, limit = MAX_BODY): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of request) {
     size += (chunk as Buffer).length;
-    if (size > limit) throw new Error("body too large");
+    if (size > limit) throw new TooLarge("body too large");
     chunks.push(chunk as Buffer);
   }
   try {
@@ -80,7 +90,11 @@ async function readBody(request: IncomingMessage, limit = MAX_BODY): Promise<unk
   }
 }
 
-class BadRequest extends Error {}
+async function readObject(request: IncomingMessage, limit = MAX_BODY): Promise<Record<string, unknown>> {
+  const body = await readBody(request, limit);
+  if (typeof body !== "object" || body === null || Array.isArray(body)) throw new BadRequest("expected an object");
+  return body as Record<string, unknown>;
+}
 
 function reply(response: ServerResponse, status: number, body: unknown) {
   response.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
@@ -123,29 +137,30 @@ export function createHttp(routes: Routes) {
         if (request.method === "GET" && path === "/state") return reply(response, 200, routes.state());
         if (request.method === "POST" && path === "/presence") {
           if (!presenceByIp(clientIp(request), now)) return reply(response, 429, { error: "slow down" });
-          const body = (await readBody(request, PRESENCE_BODY)) as Record<string, unknown>;
-          const boats = presence.update(body, now);
+          const body = await readObject(request, PRESENCE_BODY);
+          const boats = presence.update(body, now, clientIp(request));
           if (!boats) return reply(response, 400, { error: "bad position" });
           return reply(response, 200, { boats: boats.map(({ at, ...boat }) => ({ ...boat, age: now - at })) });
         }
         if (request.method === "POST" && path === "/save") {
           if (!savesByIp(clientIp(request), now)) return reply(response, 429, { ok: false, reason: "slow down" });
-          const body = (await readBody(request, SAVE_BODY)) as { key?: unknown; data?: unknown };
+          const body = await readObject(request, SAVE_BODY);
           return saves.put(body.key, body.data, now) ? reply(response, 200, { ok: true }) : reply(response, 400, { ok: false, reason: "bad save" });
         }
         if (request.method === "POST" && path === "/load") {
           if (!savesByIp(clientIp(request), now)) return reply(response, 429, { ok: false, reason: "slow down" });
-          const body = (await readBody(request, PRESENCE_BODY)) as { key?: unknown };
+          const body = await readObject(request, PRESENCE_BODY);
           const data = saves.get(body.key);
           return data === null ? reply(response, 404, { ok: false, reason: "no save under that code" }) : reply(response, 200, { ok: true, data });
         }
         if (request.method === "POST" && path === "/leave") {
-          const body = (await readBody(request, PRESENCE_BODY)) as { id?: unknown };
-          if (typeof body.id === "string") presence.leave(body.id);
+          if (!presenceByIp(clientIp(request), now)) return reply(response, 429, { error: "slow down" });
+          const body = await readObject(request, PRESENCE_BODY);
+          if (typeof body.id === "string") presence.leave(body.id, clientIp(request));
           return reply(response, 200, { ok: true });
         }
         if (request.method === "POST" && path === "/drip") {
-          const body = (await readBody(request)) as { address?: unknown };
+          const body = await readObject(request, PRESENCE_BODY);
           if (typeof body.address !== "string" || !isAddress(body.address)) return reply(response, 400, { ok: false, reason: "bad address" });
           const address = body.address.toLowerCase() as Hex;
           if (!dripByIp(clientIp(request), now) || !dripByIpDaily(clientIp(request), now) || !dripByAddress(address, now)) return reply(response, 429, { ok: false, reason: "slow down" });
@@ -168,6 +183,7 @@ export function createHttp(routes: Routes) {
         return reply(response, 404, { error: "not found" });
       } catch (error) {
         if (error instanceof BadRequest) return reply(response, 400, { error: error.message });
+        if (error instanceof TooLarge) return reply(response, 413, { error: error.message });
         routes.log({ event: "http-error", path, error: String(error).slice(0, 200) });
         return reply(response, 500, { error: "server error" });
       }

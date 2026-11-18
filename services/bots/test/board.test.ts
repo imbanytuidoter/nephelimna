@@ -30,6 +30,7 @@ describe("leaderboard", () => {
     state = applyEvents(state, [{ kind: "posted", player: A, score: 12, block: 14, tx: "0x6" }]);
     expect(state.pending).toEqual([]);
     expect(rankBoard(state)).toEqual([{ rank: 1, player: A, name: "Old Salt", score: 12, block: 14, tx: "0x6" }]);
+    expect(rankBoard(state, 50, (player) => player === A)).toEqual([]);
   });
 
   it("keeps each player's latest post, ranks by score then by who posted first, and drops names that would not show cleanly", () => {

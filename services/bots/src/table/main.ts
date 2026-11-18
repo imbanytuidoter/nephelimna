@@ -18,10 +18,10 @@ const keeperAccount = privateKeyToAccount(config.keeperKey);
 const chain = createChain(config.rpcUrl, config.table, keeperAccount);
 const keeper = createSeaKeeper(config, chain, log);
 const presence = createPresence();
-const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, presence, log);
+const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, presence, log, config.keeperReserveWei);
 const state = () => {
-  const snapshot = keeper.snapshot();
-  const board = snapshot.board.filter((row) => !anglers.isRetired(row.player)).map((row, i) => ({ ...row, rank: i + 1, bot: anglers.isBot(row.player) }));
+  const snapshot = keeper.snapshot(anglers.isRetired);
+  const board = snapshot.board.map((row) => ({ ...row, bot: anglers.isBot(row.player) }));
   const recent = snapshot.recent.filter((entry) => !anglers.isRetired(entry.player)).map((entry) => ({ ...entry, name: entry.name ?? anglers.nameOf(entry.player), bot: anglers.isBot(entry.player) }));
   return { ...snapshot, board, recent };
 };

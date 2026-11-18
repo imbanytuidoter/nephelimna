@@ -36,6 +36,26 @@ describe("presence", () => {
     expect(presence.update(at(B), 2)).toBeNull();
   });
 
+  it("keeps a boat with the address that sent it and caps boats per address", () => {
+    const presence = createPresence();
+    presence.update(at(A), 0, "1.1.1.1");
+    expect(presence.update(at(A, 5), 1, "2.2.2.2")).toBeNull();
+    presence.leave(A, "2.2.2.2");
+    expect(presence.size(2)).toBe(1);
+    presence.leave(A, "1.1.1.1");
+    expect(presence.size(3)).toBe(0);
+    for (let i = 0; i < 4; i++) expect(presence.update(at(i.toString(16).padStart(16, "0")), 4, "3.3.3.3")).not.toBeNull();
+    expect(presence.update(at(B), 5, "3.3.3.3")).toBeNull();
+  });
+
+  it("counts only people, not the fleet", () => {
+    const presence = createPresence();
+    presence.update(at(A), 0);
+    expect(presence.people(1)).toBe(0);
+    presence.update(at(B), 1, "1.1.1.1");
+    expect(presence.people(2)).toBe(1);
+  });
+
   it("passes the sender's own clock so others can space its reports evenly, and drops a bad one", () => {
     const presence = createPresence();
     presence.update({ ...at(A), t: 812.25 }, 0);
