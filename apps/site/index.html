@@ -26,7 +26,7 @@
   <link rel="apple-touch-icon" href="/site/apple-touch-icon.png">
   <link rel="preload" as="font" type="font/woff2" href="/site/fonts/Nippo-Variable.woff2" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="/site/fonts/Switzer-Variable.woff2" crossorigin>
-  <link rel="stylesheet" href="/site/tackle.css?v=6">
+  <link rel="stylesheet" href="/site/tackle.css?v=7">
   <style>html, body { margin: 0; background: #061217; } [hidden] { display: none !important; }</style>
   <noscript><style>.v-tackle .tk-hero-img { opacity: 1 !important; }</style></noscript>
 </head>
@@ -71,7 +71,7 @@
           <span class="tk-line"><span data-hero-line>Fish a sea nobody</span></span>
           <span class="tk-line"><span data-hero-line>can see into.</span></span>
         </h1>
-        <p class="tk-hero-lead" data-hero>Every square of the sea is encrypted on chain. You pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read your catch, and your score stays sealed until you choose to open it.</p>
+        <p class="tk-hero-lead" data-hero>Every square of this sea is encrypted on Sepolia. Pick a depth and a bait, cast blind, and the contract decides what bites. Only you can read what you caught.</p>
         <div class="tk-hero-ctas" data-hero>
           <a class="tk-btn tk-btn-gold tk-btn-big" href="/sea/">
             <span>Play in the browser</span>
@@ -79,12 +79,6 @@
           </a>
           <a class="tk-btn tk-btn-line tk-btn-big" href="/docs/"><span>How to play</span></a>
         </div>
-        <ul class="tk-facts" data-hero>
-          <li>No wallet needed</li>
-          <li>Test ETH for your boat is free</li>
-          <li>Runs on Sepolia</li>
-          <li>Phone and desktop</li>
-        </ul>
       </div>
     </section>
 
@@ -101,7 +95,7 @@
             <ol class="tk-rows" id="ticker">
               <li class="tk-row tk-row-empty">Reading the latest casts from the chain</li>
             </ol>
-            <p class="tk-panel-foot">You see who cast and where. What came up stays sealed.</p>
+            <p class="tk-panel-foot">You can see who cast and where, but not what they caught.</p>
           </div>
         </div>
       </section>
@@ -112,16 +106,16 @@
           <div class="tk-panel tk-facts-panel" data-rv>
             <ul class="tk-truths">
               <li>
-                <h3>Nobody knows what lives where.</h3>
-                <p>The sea has 64 squares, each with three depths: surface, middle and bottom. Fish are drawn from encrypted randomness on chain, so not the players, not the keeper and not the server can see them.</p>
+                <h3>The fish</h3>
+                <p>The sea has 64 squares, each with a surface, middle and bottom layer. The contract stocks them from encrypted randomness, so nobody can look inside, including us.</p>
               </li>
               <li>
-                <h3>Your bait is sealed before it leaves the page.</h3>
-                <p>Your browser encrypts your depth and bait. The contract compares them without seeing either, and a miss costs the same gas as a catch.</p>
+                <h3>Your bait</h3>
+                <p>Your browser encrypts the depth and bait before sending them. The contract compares them with the square without seeing either, and a miss costs the same gas as a catch.</p>
               </li>
               <li>
-                <h3>Your score opens only with proof.</h3>
-                <p>Your total grows sealed. It opens with a Zama decryption proof, and the contract checks that proof before your name goes on the leaderboard.</p>
+                <h3>Your score</h3>
+                <p>Your total stays encrypted while it grows. When you post it, Zama decrypts it with a proof, and the contract checks the proof before your name goes on the leaderboard.</p>
               </li>
             </ul>
           </div>
@@ -148,26 +142,26 @@
               <li class="tk-step">
                 <span class="tk-step-n" aria-hidden="true">1</span>
                 <h3>Seal the bait</h3>
-                <p>Your browser encrypts your depth and bait for this contract and your session key.</p>
+                <p>The browser encrypts your depth and bait for this contract.</p>
                 <p class="tk-step-time">In the browser</p>
               </li>
               <li class="tk-step">
                 <span class="tk-step-n" aria-hidden="true">2</span>
                 <h3>Cast</h3>
-                <p>One Sepolia transaction reads the layer at your depth, checks the bait and updates your total, all on encrypted values.</p>
+                <p>One Sepolia transaction looks up the layer at your depth, checks the bait and adds to your total without decrypting anything.</p>
                 <p class="tk-step-time">About 10 to 20 s</p>
               </li>
               <li class="tk-step">
                 <span class="tk-step-n" aria-hidden="true">3</span>
                 <h3>Read your catch</h3>
-                <p>Only your key can decrypt the result, and a fish swims to your hook in the window under the water.</p>
+                <p>Only your key can decrypt the result. If something bit, you see it come to the hook under the water.</p>
                 <p class="tk-step-time">About 5 to 40 s</p>
               </li>
               <li class="tk-step">
                 <span class="tk-step-n" aria-hidden="true">4</span>
                 <h3>Strike and reel</h3>
-                <p>Hook it when it takes the bait and keep the line from snapping, or leave the line out and cast again.</p>
-                <p class="tk-step-time">Your skill</p>
+                <p>Strike when it takes the bait, then reel without snapping the line. You can also leave the line out and cast again.</p>
+                <p class="tk-step-time">Up to you</p>
               </li>
             </ol>
           </div>
@@ -205,7 +199,7 @@
       <div class="tk-wrap">
         <div class="tk-water-head">
           <h2 class="tk-h2 tk-h2-big" id="tk-water-title" data-rv>On the water</h2>
-          <p class="tk-lead" data-rv>Sail a small boat around an island, anchor in a chart square and fish from the deck. Waves, light and sea grass run in WebGL2 on your phone or desktop.</p>
+          <p class="tk-lead" data-rv>Sail a small boat around the island, drop anchor in a chart square and fish from the deck. It runs in the browser on a phone or a computer.</p>
         </div>
         <figure class="tk-print tk-print-wide" data-rv>
           <img src="/site/helm.webp" alt="The boat crossing a wave beside the stilt hut, seen from behind the helm" width="1600" height="900" loading="lazy">
@@ -215,14 +209,14 @@
             <img src="/site/bite-4.webp" alt="Underwater: a fish takes the bait on the hook" width="1200" height="904" loading="lazy">
             <div class="tk-shot-text">
               <h3>Watch it bite</h3>
-              <p>A window under the water shows the fish come in, peck, and take the bait when the float twitches.</p>
+              <p>A small window under the water shows the fish come in and peck at the bait while the float twitches.</p>
             </div>
           </article>
           <article class="tk-shot" data-rv>
             <img src="/site/chest-3.webp" alt="Underwater: a wooden chest lifted on a fishing line" width="1200" height="904" loading="lazy">
             <div class="tk-shot-text">
               <h3>Depth, bait and loot</h3>
-              <p>Each fish lives at one depth and bites on certain baits. Empty casts sometimes bring up a chest.</p>
+              <p>Each fish lives at one depth and only takes some baits. An empty cast sometimes brings up a chest.</p>
             </div>
           </article>
           <article class="tk-shot" data-rv>
@@ -243,7 +237,7 @@
         <div class="tk-panel tk-baits" data-rv>
           <div class="tk-baits-head">
             <h3 class="tk-h3">What bites on what</h3>
-            <p>Each bait reaches its own band of fish, from common up to mythic.</p>
+            <p>Rarer fish need better bait.</p>
           </div>
           <dl>
             <div><dt>Worm</dt><dd><span class="tk-rar" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i></span><span>Common, uncommon</span></dd></div>
@@ -279,7 +273,7 @@
       <div class="tk-wrap">
         <div class="tk-close-box">
           <h2 class="tk-h2 tk-h2-big" id="tk-close-title" data-rv>Your boat gets test ETH on the first cast.</h2>
-          <p class="tk-lead" data-rv>Open the game, steer into a chart square and cast. No wallet, no sign up.</p>
+          <p class="tk-lead" data-rv>Open the game, steer into a chart square and cast. You do not need a wallet or an account.</p>
           <div class="tk-close-ctas" data-rv>
             <a class="tk-btn tk-btn-gold tk-btn-big" href="/sea/">
               <span>Play now</span>

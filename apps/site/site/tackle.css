@@ -435,3 +435,8 @@
 }
 .v-tackle .tk-chart { margin-top: 0; }
 .v-tackle .tk-footer-mark { padding-bottom: 0.12em; }
+@media (max-width: 599px) {
+  .v-tackle .tk-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+  .v-tackle .tk-facts li, .v-tackle .tk-facts li:first-child { padding: 0 0 0 12px; border-left: 2px solid var(--tk-line); }
+  .v-tackle .tk-footer-mark { font-size: 14vw; }
+}
