@@ -6,7 +6,6 @@ Built for the Zama Developer Program, Mainnet Season 5, Confidential Gaming. Sep
 
 - Play: https://nephelimna.imbanytui.xyz/sea/
 - Contract: [`0x05371fD71D88D57c5A6B7419538bF50601237c2E`](https://sepolia.etherscan.io/address/0x05371fD71D88D57c5A6B7419538bF50601237c2E) (`NepheSea`, Sepolia)
-- Video: VIDEO_ID
 
 ## Play it in two minutes
 
