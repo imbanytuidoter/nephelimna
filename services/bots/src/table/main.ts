@@ -18,10 +18,16 @@ const keeperAccount = privateKeyToAccount(config.keeperKey);
 const chain = createChain(config.rpcUrl, config.table, keeperAccount);
 const keeper = createSeaKeeper(config, chain, log);
 const presence = createPresence();
-const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, presence, log, config.keeperReserveWei);
+const bestPerson = () => keeper.snapshot(anglers.isRetired).board.filter((row) => !anglers.isBot(row.player)).reduce((best, row) => Math.max(best, row.score), 0);
+/** Bots keep the sea busy for people, so a bot only posts while its last posted score is below the best person's. */
+const mayPost = (player: string) => (keeper.snapshot().board.find((row) => row.player.toLowerCase() === player.toLowerCase())?.score ?? 0) < bestPerson();
+const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, presence, log, config.keeperReserveWei, mayPost);
 const state = () => {
   const snapshot = keeper.snapshot(anglers.isRetired);
-  const board = snapshot.board.map((row) => ({ ...row, name: anglers.nameOf(row.player) ?? row.name, bot: anglers.isBot(row.player) }));
+  const best = bestPerson();
+  const board = snapshot.board
+    .filter((row) => !anglers.isBot(row.player) || row.score <= best)
+    .map((row, i) => ({ ...row, rank: i + 1, name: anglers.nameOf(row.player) ?? row.name, bot: anglers.isBot(row.player) }));
   const recent = snapshot.recent.filter((entry) => !anglers.isRetired(entry.player)).map((entry) => ({ ...entry, name: anglers.nameOf(entry.player) ?? entry.name, bot: anglers.isBot(entry.player) }));
   return { ...snapshot, board, recent };
 };

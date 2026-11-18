@@ -143,7 +143,7 @@ function loadRetired(file: string): Set<string> {
   }
 }
 
-export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, keeperReserveWei = 0n, random: Random = Math.random) {
+export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typeof privateKeyToAccount>, presence: Presence, log: Log, keeperReserveWei = 0n, mayPost: (player: string) => boolean = () => true, random: Random = Math.random) {
   const fresh = (style: number): Bot => ({ key: generatePrivateKey(), style, joined: false, casts: 0, postAt: FIRST_POST });
   const loaded = loadBots(file, log) ?? [];
   const missing = STYLES.map((_, style) => style).filter((style) => !loaded.some((bot) => bot.style === style));
@@ -196,7 +196,7 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
     log({ event: "angler-cast", name: style.name, cell });
     if (casts < bots[index]!.postAt) return update(index, { casts });
     const [, , posting] = await chain.read<readonly [Hex, number, boolean, number, bigint]>("anglerInfo", [account.address]);
-    if (!posting) {
+    if (!posting && mayPost(account.address)) {
       await chain.send(account, "postScore", [style.name], SEA.postGas);
       log({ event: "angler-posted", name: style.name });
     }
