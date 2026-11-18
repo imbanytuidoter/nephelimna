@@ -185,9 +185,13 @@ const LIVE_URL = "/sea/?view";
 const LIVE_MESSAGE = "nephelimna-view";
 
 const video = $("hero-video");
-if (video && calm) {
-  video.removeAttribute("autoplay");
-  video.pause();
+const still = $("hero-still");
+
+/** The live scene keeps a fixed vertical field of view, so the still is fitted by height and centred; a portrait box gets the portrait still because the scene switches to its portrait camera there. */
+function fitStill() {
+  if (!still) return;
+  const box = still.getBoundingClientRect();
+  still.classList.toggle("tall", box.width < box.height);
 }
 
 function canRenderLive() {
@@ -201,17 +205,26 @@ function canRenderLive() {
 function liveHero() {
   const frame = $("hero-live");
   const hero = frame?.closest(".hero");
-  if (!frame || !hero || !canRenderLive()) return;
+  if (!frame || !hero) return;
+  if (!canRenderLive()) {
+    if (!calm && video) {
+      video.classList.add("play");
+      video.preload = "auto";
+      void video.play().catch(() => {});
+    }
+    return;
+  }
   const tell = (run) => frame.contentWindow?.postMessage({ type: LIVE_MESSAGE, run }, location.origin);
   addEventListener("message", (event) => {
     if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.type !== LIVE_MESSAGE || !event.data.ready) return;
     frame.classList.add("on");
-    frame.addEventListener("transitionend", () => video?.pause(), { once: true });
   });
   new IntersectionObserver(([entry]) => tell(entry.isIntersecting)).observe(hero);
   frame.src = LIVE_URL;
 }
 
+fitStill();
+addEventListener("resize", fitStill);
 liveHero();
 bubbles();
 chart();

@@ -455,6 +455,26 @@
       #hud-game .gauge, #hud-game .nav, #sea, #fishing, #help, #mode-toggle, #trade-prompt, #catch-card, #hud-game .hint { zoom: 0.68; }
       #minimap { width: 112px; height: 112px; }
     }
+    @media (max-height: 520px) {
+      #sea { gap: 8px; padding: 4px 4px 4px 12px; border-left: 0; border-radius: 999px; box-shadow: 0 0 0 1px rgba(242, 246, 244, 0.1); }
+      #sea-line { display: flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+      #sea-line::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+      #sea[data-phase="fishing"] #sea-line::before, #sea[data-phase="posting"] #sea-line::before { background: #8fd6c8; }
+      #sea[data-phase="offline"] #sea-line::before { background: rgba(242, 246, 244, 0.35); }
+      .sea-actions { gap: 4px; }
+      .sea-actions button { min-height: 32px; padding: 2px 12px; border-radius: 999px; font-size: 11px; }
+      .on-deck #hud-game .nav { display: grid; grid-template-columns: auto auto; align-items: start; justify-items: end; gap: 6px 8px; }
+      .on-deck #hud-game .nav > * { grid-column: 1; }
+      .on-deck #hud-game .nav > #minimap { grid-column: 2; grid-row: 1 / span 3; }
+      .on-deck #hud-game .nav > #chart-readout { grid-column: 2; grid-row: 4; justify-self: center; }
+      #fishing { width: 250px; gap: 5px; }
+      .on-deck #fishing { right: calc(max(16px, env(safe-area-inset-right)) + 290px); }
+      #fishing .tackle { gap: 4px; padding: 6px 8px 8px; }
+      #fishing .seg button { min-height: 30px; font-size: 11px; }
+      #fishing #fish-net, #fishing #fish-action { min-height: 50px; }
+      #fishing #fish-action { font-size: 15px; }
+      #fish-message { font-size: 12px; padding: 6px 10px; }
+    }
   </style>
 </head>
 <body>

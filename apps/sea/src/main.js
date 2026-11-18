@@ -44,6 +44,11 @@ document.body.appendChild(renderer.domElement);
 const args = new URLSearchParams(location.search);
 const debug = args.has('debug');
 const view = args.has('view');
+let loadsLeft = 0;
+THREE.DefaultLoadingManager.onStart = (_url, loaded, total) => (loadsLeft = total - loaded);
+THREE.DefaultLoadingManager.onProgress = (_url, loaded, total) => (loadsLeft = total - loaded);
+THREE.DefaultLoadingManager.onLoad = () => (loadsLeft = 0);
+THREE.DefaultLoadingManager.onError = () => (loadsLeft = Math.max(0, loadsLeft - 1));
 const mobile = args.has('mobile') || (!args.has('desktop') && matchMedia('(pointer: coarse)').matches);
 const quality = mobile
   ? { resolution: 0.6, msaa: 2, reflections: true, reflectionScale: 0.35, autoResolution: true }
@@ -599,15 +604,21 @@ function tick(now) {
   if (now - lastHud > 500) updateHud(now);
 }
 
-const VIEW_READY_FRAMES = 90;
-let viewRunning = true, viewFrames = 0;
+const VIEW_READY_FRAMES = 45;
+let viewRunning = true, viewFrames = 0, viewReady = false;
 addEventListener('message', (event) => {
   if (event.origin !== location.origin || event.data?.type !== 'nephelimna-view') return;
   viewRunning = event.data.run !== false;
 });
 function loop(now) {
   if (view && !viewRunning) { last = now; requestAnimationFrame(loop); return; }
-  if (view && ++viewFrames === VIEW_READY_FRAMES) parent.postMessage({ type: 'nephelimna-view', ready: true }, location.origin);
+  if (view && !viewReady) {
+    viewFrames = loadsLeft > 0 ? 0 : viewFrames + 1;
+    if (viewFrames >= VIEW_READY_FRAMES) {
+      viewReady = true;
+      parent.postMessage({ type: 'nephelimna-view', ready: true }, location.origin);
+    }
+  }
   if (uncapped) { spin(); return; }
   if (auto.cap30 && (auto.odd = !auto.odd)) { requestAnimationFrame(loop); return; }
   if (benchmarking) last = now;
