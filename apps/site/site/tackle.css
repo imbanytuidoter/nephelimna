@@ -407,3 +407,31 @@
 .v-tackle .tk-rar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; max-width: 160px; }
 .v-tackle .tk-rar i { height: 8px; border-radius: 2px; background: rgba(23, 38, 31, 0.14); }
 .v-tackle .tk-rar i.on { background: var(--tk-gold); }
+
+.v-tackle .tk-hero { align-items: flex-start; }
+.v-tackle .tk-hero-copy { padding-top: 148px; padding-bottom: 64px; }
+.v-tackle .tk-hero-shade { background: linear-gradient(180deg, rgba(6, 18, 23, 0.82) 0%, rgba(6, 18, 23, 0.55) 42%, rgba(6, 18, 23, 0.1) 68%, rgba(6, 18, 23, 0.55) 90%, var(--tk-deep) 100%), linear-gradient(90deg, rgba(6, 18, 23, 0.55) 0%, rgba(6, 18, 23, 0) 55%); }
+.v-tackle .tk-facts-panel { margin-top: 0; }
+.v-tackle .tk-sealed { padding-top: 12vh; }
+.v-tackle .tk-footer { padding: 88px 0 120px; border-top: 0; background: linear-gradient(180deg, #08191f 0%, var(--tk-deep) 100%); overflow: hidden; }
+.v-tackle .tk-footer-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 48px; align-items: start; }
+.v-tackle .tk-footer-brand { display: grid; gap: 16px; justify-items: start; }
+.v-tackle .tk-footer-name { display: flex; align-items: center; gap: 14px; font-family: var(--tk-head); font-weight: 700; font-size: 26px; }
+.v-tackle .tk-footer-line { color: var(--tk-muted); font-size: 17px; max-width: 32ch; }
+.v-tackle .tk-footer-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.v-tackle .tk-footer-head { font-family: var(--tk-head); font-weight: 700; font-size: 15px; color: var(--tk-gold); margin-bottom: 12px; }
+.v-tackle .tk-footer-cols ul { display: grid; gap: 2px; }
+.v-tackle .tk-footer-cols a, .v-tackle .tk-footer-cols button { display: inline-flex; align-items: center; min-height: 40px; padding: 0; border: 0; background: none; cursor: pointer; font: 500 16px var(--tk-body); color: var(--tk-ink); text-decoration: none; }
+.v-tackle .tk-footer-cols a:hover, .v-tackle .tk-footer-cols button:hover { color: var(--tk-gold); }
+.v-tackle .tk-footer-mark { margin: 72px 0 0; font-family: var(--tk-head); font-weight: 700; font-size: clamp(64px, 15.5vw, 230px); line-height: 0.82; letter-spacing: -0.03em; color: transparent; -webkit-text-stroke: 1.5px rgba(191, 243, 239, 0.22); white-space: nowrap; user-select: none; }
+.v-tackle .tk-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--tk-line); font-size: 14px; color: var(--tk-muted); }
+.v-tackle .tk-footer-note, .v-tackle .tk-footer-links { display: none; }
+@media (max-width: 899px) {
+  .v-tackle .tk-hero-copy { padding-top: 112px; }
+  .v-tackle .tk-footer { padding-top: 64px; }
+  .v-tackle .tk-footer-top { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .v-tackle .tk-footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-tackle .tk-footer-mark { margin-top: 48px; }
+}
+.v-tackle .tk-chart { margin-top: 0; }
+.v-tackle .tk-footer-mark { padding-bottom: 0.12em; }
