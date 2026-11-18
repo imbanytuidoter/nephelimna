@@ -327,6 +327,19 @@
     .guide-steps span { font-size: 13px; line-height: 1.45; opacity: 0.78; }
     #guide-open { min-height: 36px; padding: 4px 10px; border: 0; border-radius: 8px; cursor: pointer; pointer-events: auto; font: 600 11px ui-monospace, Menlo, monospace; color: var(--ink); background: var(--shade); }
     #guide-open.attention { color: #0b1518; background: var(--accent); }
+    #site-link { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px; border-radius: 8px; pointer-events: auto; text-decoration: none; font: 600 11px ui-monospace, Menlo, monospace; color: var(--ink); background: var(--shade); }
+    #site-link svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    #site-link:hover, #site-link:focus-visible { box-shadow: 0 0 0 1px var(--accent); }
+    #loading { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; color: var(--ink); background: radial-gradient(120% 90% at 50% 30%, #0b2a33 0%, #061217 70%); transition: opacity 0.7s ease, visibility 0.7s; }
+    #loading.done { opacity: 0; visibility: hidden; }
+    #loading img { width: 72px; height: 72px; animation: loading-bob 2.4s ease-in-out infinite; }
+    #loading .loading-name { margin: 0; font: 800 26px ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.01em; }
+    #loading .loading-track { width: min(260px, 70vw); height: 6px; border-radius: 3px; overflow: hidden; background: rgba(191, 243, 239, 0.14); }
+    #loading .loading-track i { display: block; height: 100%; background: var(--accent); transform: scaleX(0.04); transform-origin: left; transition: transform 0.4s ease; }
+    #loading #loading-text { margin: 0; font: 600 12px ui-monospace, Menlo, monospace; opacity: 0.8; }
+    #loading .loading-tip { margin: 6px 0 0; max-width: 34ch; font-size: 13px; opacity: 0.6; }
+    @keyframes loading-bob { 50% { transform: translateY(-6px); } }
+    @media (prefers-reduced-motion: reduce) { #loading img { animation: none; } }
     #board .board-lead { margin: 0; padding: 0 20px 14px; font-size: 13px; opacity: 0.72; }
     .board-frame { max-height: min(56vh, 460px); overflow-y: auto; padding: 0 12px 16px; }
     #board table { width: 100%; border-collapse: separate; border-spacing: 0 6px; font-variant-numeric: tabular-nums; }
@@ -387,7 +400,7 @@
       #sea { left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); transform: none; top: max(306px, calc(env(safe-area-inset-top) + 292px)); width: auto; max-width: none; }
       .on-deck #help { top: max(380px, calc(env(safe-area-inset-top) + 366px)); }
     }
-    #rotate { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; color: var(--ink); background: #0b1518; font: 600 18px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    #rotate { position: fixed; inset: 0; z-index: 1001; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; color: var(--ink); background: #0b1518; font: 600 18px/1.4 ui-sans-serif, system-ui, sans-serif; }
     #rotate svg { width: 72px; height: 72px; animation: turn 2.4s ease-in-out infinite; }
     @keyframes turn { 0%, 30% { transform: rotate(0); } 70%, 100% { transform: rotate(-90deg); } }
     @media (pointer: coarse) and (orientation: portrait) { #rotate { display: flex; } }
@@ -478,6 +491,13 @@
   </style>
 </head>
 <body>
+  <div id="loading" role="status" aria-live="polite">
+    <img src="/site/logo.svg" alt="" width="72" height="72">
+    <p class="loading-name">Nephelimna</p>
+    <div class="loading-track" aria-hidden="true"><i id="loading-bar"></i></div>
+    <p id="loading-text">Loading the sea</p>
+    <p class="loading-tip">Sail into a chart square, drop anchor, then cast.</p>
+  </div>
   <div id="rotate" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span>Turn your phone sideways to play</span></div>
   <div id="perf">
     <div id="pGpu"></div>
@@ -506,6 +526,7 @@
       </div>
       <button id="progress-open" type="button" title="Back up your progress with a code">Save code</button>
       <button id="guide-open" type="button">How to play</button>
+      <a id="site-link" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to site</a>
     </div>
     <div class="fps" data-fps></div>
     <div class="hint" data-hint></div>

@@ -124,9 +124,11 @@ export function createProgress({ baseUrl }) {
   opener.addEventListener("click", open);
   if (code && !seen()) {
     opener.classList.add("attention");
-    setTimeout(() => {
+    const prompt = () => setTimeout(() => {
       if (!seen() && !document.hidden) open();
     }, FIRST_PROMPT_MS);
+    if (document.documentElement.dataset.ready) prompt();
+    else addEventListener("nephelimna-ready", prompt, { once: true });
   }
   el("progress-close").addEventListener("click", () => {
     markSeen();

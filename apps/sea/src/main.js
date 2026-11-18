@@ -45,8 +45,22 @@ const args = new URLSearchParams(location.search);
 const debug = args.has('debug');
 const view = args.has('view');
 let loadsLeft = 0;
-THREE.DefaultLoadingManager.onStart = (_url, loaded, total) => (loadsLeft = total - loaded);
-THREE.DefaultLoadingManager.onProgress = (_url, loaded, total) => (loadsLeft = total - loaded);
+const loader = document.getElementById('loading');
+const loaderBar = document.getElementById('loading-bar');
+const loaderText = document.getElementById('loading-text');
+let loaderShare = 0;
+const setBar = (share) => {
+  loaderShare = Math.max(loaderShare, share);
+  if (loaderBar) loaderBar.style.transform = `scaleX(${loaderShare.toFixed(3)})`;
+};
+let loadsSeen = false;
+const showProgress = (loaded, total) => {
+  loadsSeen = true;
+  loadsLeft = total - loaded;
+  setBar(0.06 + 0.7 * (total ? loaded / total : 0));
+};
+THREE.DefaultLoadingManager.onStart = (_url, loaded, total) => showProgress(loaded, total);
+THREE.DefaultLoadingManager.onProgress = (_url, loaded, total) => showProgress(loaded, total);
 THREE.DefaultLoadingManager.onLoad = () => (loadsLeft = 0);
 THREE.DefaultLoadingManager.onError = () => (loadsLeft = Math.max(0, loadsLeft - 1));
 const mobile = args.has('mobile') || (!args.has('desktop') && matchMedia('(pointer: coarse)').matches);
@@ -604,20 +618,33 @@ function tick(now) {
   if (now - lastHud > 500) updateHud(now);
 }
 
-const VIEW_READY_FRAMES = 45;
-let viewRunning = true, viewFrames = 0, viewReady = false;
+const READY_FRAMES = 45;
+const LOADER_FADE_MS = 700;
+let viewRunning = true, readyFrames = 0, ready = false;
+/** The first frames after the models arrive compile shaders and upload textures, which stutters; the loading screen stays up until a run of frames has gone by with nothing left to load. */
+function markReady() {
+  ready = true;
+  if (view) return parent.postMessage({ type: 'nephelimna-view', ready: true }, location.origin);
+  document.documentElement.dataset.ready = '1';
+  dispatchEvent(new Event('nephelimna-ready'));
+  if (!loader) return;
+  setBar(1);
+  if (loaderText) loaderText.textContent = 'Ready';
+  loader.classList.add('done');
+  setTimeout(() => loader.remove(), LOADER_FADE_MS);
+}
 addEventListener('message', (event) => {
   if (event.origin !== location.origin || event.data?.type !== 'nephelimna-view') return;
   viewRunning = event.data.run !== false;
 });
 function loop(now) {
   if (view && !viewRunning) { last = now; requestAnimationFrame(loop); return; }
-  if (view && !viewReady) {
-    viewFrames = loadsLeft > 0 ? 0 : viewFrames + 1;
-    if (viewFrames >= VIEW_READY_FRAMES) {
-      viewReady = true;
-      parent.postMessage({ type: 'nephelimna-view', ready: true }, location.origin);
-    }
+  if (!ready) {
+    readyFrames = loadsLeft > 0 || !loadsSeen ? 0 : readyFrames + 1;
+    const stage = readyFrames > 0 ? 'Warming up the water' : 'Loading the sea';
+    if (!view && loaderText && loaderText.textContent !== stage) loaderText.textContent = stage;
+    if (!view && readyFrames > 0) setBar(0.76 + 0.2 * (readyFrames / READY_FRAMES));
+    if (readyFrames >= READY_FRAMES) markReady();
   }
   if (uncapped) { spin(); return; }
   if (auto.cap30 && (auto.odd = !auto.odd)) { requestAnimationFrame(loop); return; }
