@@ -40,6 +40,7 @@ export function createView({ camera, scene, floaters, patchMaterial, water, onSt
   const berth = new THREE.Vector3(site.berth.x, 0.3, site.berth.z);
   const body = floaters.addBody(createPlayerDescriptor(helm, patchMaterial, model, push), berth, site.berth.yaw);
   helm.anchor = { x: berth.x, z: berth.z };
+  helm.hold = site.berth.yaw;
   const { centerX } = hullMetrics();
   water.uHull.value.set(HULL.length, HULL.halfBeam, centerX, 1);
   water.uShoreWave.value.x = 0;

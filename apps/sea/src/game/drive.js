@@ -12,7 +12,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const approach = (value, target, step) => value + clamp(target - value, -step, step);
 
 export function createHelm() {
-  return { throttle: 0, rudder: 0, wantThrottle: 0, wantRudder: 0, anchor: null, brake: false };
+  return { throttle: 0, rudder: 0, wantThrottle: 0, wantRudder: 0, anchor: null, hold: null, brake: false };
 }
 
 export function stepHelm(helm, dt) {
@@ -36,6 +36,10 @@ export function createDrive(helm, length, blockPush, freeboard) {
     }
     fwd.set(1, 0, 0).applyQuaternion(body.quat);
     up.set(0, 1, 0).applyQuaternion(body.quat);
+    if (helm.hold !== null) {
+      const turn = Math.atan2(Math.sin(helm.hold - Math.atan2(-fwd.z, fwd.x)), Math.cos(helm.hold - Math.atan2(-fwd.z, fwd.x)));
+      torque.y += (DRIVE.holdPull * turn - DRIVE.holdDamp * body.angVel.y) / body.invInertia.y;
+    }
     const speed = body.vel.dot(fwd);
     const grip = clamp(body.submerged * 3, 0, 1);
     const gear = helm.throttle >= 0 ? 1 : DRIVE.reverse;

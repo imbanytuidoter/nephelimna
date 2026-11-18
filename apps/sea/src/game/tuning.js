@@ -36,6 +36,8 @@ export const DRIVE = {
   propOffset: { x: -0.42, y: -0.32 },
   anchorPull: 1.4,
   anchorDamp: 2.4,
+  holdPull: 1.2,
+  holdDamp: 2.2,
   brakeDamp: 0.85,
 };
 

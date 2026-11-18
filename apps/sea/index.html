@@ -468,7 +468,7 @@
       #hud-game .nav > #minimap { grid-column: 2; grid-row: 1 / span 3; }
       #hud-game .nav > #chart-readout { grid-column: 2; grid-row: 4; justify-self: center; }
       #fishing { width: 250px; gap: 5px; }
-      .on-deck #fishing { right: calc(max(16px, env(safe-area-inset-right)) + 290px); }
+      #fishing, .on-deck #fishing { right: max(16px, env(safe-area-inset-right)); }
       #fishing .tackle { gap: 4px; padding: 6px 8px 8px; }
       #fishing .seg button { min-height: 30px; font-size: 11px; }
       #fishing #fish-net, #fishing #fish-action { min-height: 50px; }
