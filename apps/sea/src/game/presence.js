@@ -8,11 +8,31 @@ import { createTrack } from "./track.js";
 const SEND_EVERY = 0.25;
 const SEND_TIMEOUT_MS = 5_000;
 const SMOOTH = 12;
-const STALE_AFTER = 3;
+const STALE_AFTER = 8;
 const FAILURES_BEFORE_CLEAR = 6;
 const REFLECTION_LAYER = 1;
 const TAG_HEIGHT = 3.4;
 const TAG_RANGE = 450;
+
+function hex(bytes) {
+  return Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function sessionValue(name, pattern, make) {
+  try {
+    const stored = sessionStorage.getItem(name);
+    if (stored && pattern.test(stored)) return stored;
+  } catch (error) {
+    console.warn("session storage unavailable", error);
+  }
+  const value = make();
+  try {
+    sessionStorage.setItem(name, value);
+  } catch (error) {
+    console.warn("session storage unavailable", error);
+  }
+  return value;
+}
 
 function newId() {
   try {
@@ -41,6 +61,7 @@ function turnToward(from, to, amount) {
 export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) {
   const api = new URL(`${baseUrl}api/`, window.location.href);
   const id = newId();
+  const key = sessionValue("sea-presence-key", /^[0-9a-f]{32}$/, () => hex(16));
   const { centerX } = hullMetrics();
   const remote = new Map();
   const fwd = new THREE.Vector3();
@@ -138,7 +159,7 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
       const response = await fetch(new URL("presence", api), {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, name, t: Math.round(performance.now()) / 1000, x: body.pos.x, y: body.pos.y, z: body.pos.z, yaw: Math.atan2(-fwd.z, fwd.x) }),
+        body: JSON.stringify({ id, key, name, t: Math.round(performance.now()) / 1000, x: body.pos.x, y: body.pos.y, z: body.pos.z, yaw: Math.atan2(-fwd.z, fwd.x) }),
         signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
       if (!response.ok) throw new Error(`presence ${response.status}`);
@@ -157,7 +178,7 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
   };
 
   addEventListener("pagehide", () => {
-    navigator.sendBeacon(new URL("leave", api), new Blob([JSON.stringify({ id })], { type: "application/json" }));
+    navigator.sendBeacon(new URL("leave", api), new Blob([JSON.stringify({ id, key })], { type: "application/json" }));
   });
 
   return {

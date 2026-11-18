@@ -72,6 +72,13 @@ function clientIp(request: IncomingMessage): string {
   return clientKey(first || request.socket.remoteAddress || "local");
 }
 
+const OWNER_KEY = /^[0-9a-f]{32}$/;
+
+/** Requests reach us through Cloudflare, so the address we see is an edge node that changes between requests; a boat is tied to a secret key its own tab made, and only old clients without one fall back to the address. */
+function ownerOf(body: Record<string, unknown>, request: IncomingMessage): string {
+  return typeof body.key === "string" && OWNER_KEY.test(body.key) ? `key:${body.key}` : clientIp(request);
+}
+
 class BadRequest extends Error {}
 class TooLarge extends Error {}
 
@@ -138,7 +145,7 @@ export function createHttp(routes: Routes) {
         if (request.method === "POST" && path === "/presence") {
           if (!presenceByIp(clientIp(request), now)) return reply(response, 429, { error: "slow down" });
           const body = await readObject(request, PRESENCE_BODY);
-          const boats = presence.update(body, now, clientIp(request));
+          const boats = presence.update(body, now, ownerOf(body, request));
           if (!boats) return reply(response, 400, { error: "bad position" });
           return reply(response, 200, { boats: boats.map(({ at, ...boat }) => ({ ...boat, age: now - at })) });
         }
@@ -156,7 +163,7 @@ export function createHttp(routes: Routes) {
         if (request.method === "POST" && path === "/leave") {
           if (!presenceByIp(clientIp(request), now)) return reply(response, 429, { error: "slow down" });
           const body = await readObject(request, PRESENCE_BODY);
-          if (typeof body.id === "string") presence.leave(body.id, clientIp(request));
+          if (typeof body.id === "string") presence.leave(body.id, ownerOf(body, request));
           return reply(response, 200, { ok: true });
         }
         if (request.method === "POST" && path === "/drip") {

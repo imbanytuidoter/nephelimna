@@ -12,6 +12,15 @@ const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = (id) => document.getElementById(id);
 const cellLabel = (index) => `${COLUMNS[index % 8]}${Math.floor(index / 8) + 1}`;
 const nameOf = (entry) => entry.name ?? `Angler ${entry.player.slice(2, 6).toLowerCase()}`;
+const BOT_ICON = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>';
+const botMark = () => {
+  const mark = document.createElement("span");
+  mark.className = "tk-ai";
+  mark.title = "Bot angler run by the game";
+  mark.innerHTML = BOT_ICON;
+  mark.append(Object.assign(document.createElement("span"), { className: "tk-visually-hidden", textContent: "bot" }));
+  return mark;
+};
 const node = (tag, text, className) => {
   const el = document.createElement(tag);
   if (text !== undefined) el.textContent = text;
@@ -49,7 +58,7 @@ function countTo(el, value) {
 function tickerRow(entry, now) {
   const row = node("li", undefined, "tk-row");
   row.append(node("span", nameOf(entry), "tk-row-name"));
-  if (entry.bot) row.append(node("span", "AI", "tk-ai"));
+  if (entry.bot) row.append(botMark());
   const square = node("span", entry.cell === null ? "?" : cellLabel(entry.cell), "tk-sq");
   square.title = ago(entry.at, now);
   row.append(square);
@@ -60,7 +69,7 @@ function boardRow(entry) {
   const tr = document.createElement("tr");
   const who = node("td");
   who.append(node("span", nameOf(entry), "tk-who"));
-  if (entry.bot) who.append(document.createTextNode(" "), node("span", "AI", "tk-ai"));
+  if (entry.bot) who.append(document.createTextNode(" "), botMark());
   const proof = node("td", undefined, "tk-c-tx");
   const link = node("a", "Tx");
   link.href = `${EXPLORER}${entry.tx}`;
@@ -129,6 +138,7 @@ function liveHero() {
   const hero = frame?.closest(".tk-hero");
   if (!frame || !hero) return;
   if (!canRenderLive()) {
+    hero.classList.add("show-still");
     if (!calm && video) {
       video.classList.add("play");
       video.preload = "auto";

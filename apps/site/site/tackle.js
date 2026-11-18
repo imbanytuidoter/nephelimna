@@ -652,7 +652,7 @@
     k.cast += ((s.castST ? s.castST.progress : 0) - k.cast) * damp;
   }
 
-  function placeCamera(s, g, time) {
+  function placeCamera(s, g, _time) {
     var t = g.t, k = g.k, cam = g.camera;
     var wide = g.aspect >= 1;
     var a = smooth(k.tray), b = smooth(k.approach);

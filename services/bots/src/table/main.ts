@@ -21,7 +21,7 @@ const presence = createPresence();
 const anglers = createAnglers(join(dirname(config.stateFile), "anglers.json"), chain, keeperAccount, presence, log, config.keeperReserveWei);
 const state = () => {
   const snapshot = keeper.snapshot(anglers.isRetired);
-  const board = snapshot.board.map((row) => ({ ...row, bot: anglers.isBot(row.player) }));
+  const board = snapshot.board.map((row) => ({ ...row, name: anglers.nameOf(row.player) ?? row.name, bot: anglers.isBot(row.player) }));
   const recent = snapshot.recent.filter((entry) => !anglers.isRetired(entry.player)).map((entry) => ({ ...entry, name: entry.name ?? anglers.nameOf(entry.player), bot: anglers.isBot(entry.player) }));
   return { ...snapshot, board, recent };
 };

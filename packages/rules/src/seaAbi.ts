@@ -53,7 +53,7 @@ export const SEA = {
   fillGas: 6_500_000n,
   netGas: 1_000_000n,
   joinGas: 1_000_000n,
-  postGas: 400_000n,
+  postGas: 700_000n,
   confirmGas: 600_000n,
 } as const;
 

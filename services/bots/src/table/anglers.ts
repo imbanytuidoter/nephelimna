@@ -5,6 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Chain } from "./chain.js";
 import type { Presence } from "./presence.js";
 
+const ALONE_GRACE_MS = 60_000;
 const KEY_PATTERN = /^0x[0-9a-f]{64}$/;
 const FUND_FLOOR_WEI = 3_000_000_000_000_000n;
 const FUND_WEI = 10_000_000_000_000_000n;
@@ -22,7 +23,6 @@ const CHART_HALF = 1600;
 const CELL_M = (CHART_HALF * 2) / 8;
 const OPEN_WATER_FROM = 700;
 const OPEN_WATER_TO = 1500;
-const NAME_SUFFIX = " AI";
 const SAVE_EVERY_MS = 60_000;
 const CLOCK_WRAP_MS = 100_000_000;
 
@@ -32,14 +32,14 @@ interface Style {
 }
 
 export const STYLES: readonly Style[] = [
-  { name: "Old Pike", choices: [[0, 0, 5], [1, 0, 3], [0, 1, 1]] },
-  { name: "Mara of the Reef", choices: [[1, 0, 3], [1, 1, 2], [0, 0, 3]] },
-  { name: "Brine Owl", choices: [[0, 0, 3], [1, 1, 2], [2, 0, 2]] },
-  { name: "Kelpie", choices: [[0, 0, 4], [0, 1, 2], [1, 0, 2]] },
-  { name: "Salt Wren", choices: [[1, 0, 3], [2, 0, 2], [0, 1, 2]] },
-  { name: "Dara Quill", choices: [[0, 0, 4], [1, 0, 2], [1, 1, 1]] },
-  { name: "Tomas Reed", choices: [[1, 0, 3], [0, 1, 2], [2, 1, 1]] },
-  { name: "Ines Lowe", choices: [[0, 1, 3], [1, 1, 2], [0, 0, 2]] },
+  { name: "pikewhisper", choices: [[0, 0, 5], [1, 0, 3], [0, 1, 1]] },
+  { name: "reefmara", choices: [[1, 0, 3], [1, 1, 2], [0, 0, 3]] },
+  { name: "brineowl", choices: [[0, 0, 3], [1, 1, 2], [2, 0, 2]] },
+  { name: "kelpline", choices: [[0, 0, 4], [0, 1, 2], [1, 0, 2]] },
+  { name: "saltwren", choices: [[1, 0, 3], [2, 0, 2], [0, 1, 2]] },
+  { name: "quillfin", choices: [[0, 0, 4], [1, 0, 2], [1, 1, 1]] },
+  { name: "reedcaster", choices: [[1, 0, 3], [0, 1, 2], [2, 1, 1]] },
+  { name: "lowtide", choices: [[0, 1, 3], [1, 1, 2], [0, 0, 2]] },
 ];
 
 export interface Boat {
@@ -203,10 +203,15 @@ export function createAnglers(file: string, chain: Chain, keeper: ReturnType<typ
     update(index, { casts: 0, postAt: Math.round(between(...POST_AFTER, random())) });
   }
 
-  const peopleOnline = (now: number) => presence.people(now) > 0;
+  let lastPeopleAt = 0;
+  /** A person's boat drops out of presence for a few seconds whenever their tab sleeps or a request is slow, so the fleet waits a while before treating the sea as empty; otherwise boats stop updating and vanish for that person. */
+  const peopleOnline = (now: number) => {
+    if (presence.people(now) > 0) lastPeopleAt = now;
+    return now - lastPeopleAt < ALONE_GRACE_MS;
+  };
 
   function show(now: number) {
-    bots.forEach((bot, i) => presence.update({ id: boatIds[i], name: `${STYLES[bot.style]!.name}${NAME_SUFFIX}`, x: bot.boat!.x, y: 0, z: bot.boat!.z, yaw: bot.boat!.yaw, t: (now % CLOCK_WRAP_MS) / 1000 }, now));
+    bots.forEach((bot, i) => presence.update({ id: boatIds[i], name: STYLES[bot.style]!.name, x: bot.boat!.x, y: 0, z: bot.boat!.z, yaw: bot.boat!.yaw, t: (now % CLOCK_WRAP_MS) / 1000 }, now));
   }
 
   function maybeCast(now: number) {

@@ -15,6 +15,7 @@ export default tseslint.config(
       "**/typechain-types/**",
       "apps/sea/src/ocean/**",
       "apps/sea/src/main.js",
+      "apps/site/site/vendor/**",
     ],
   },
   js.configs.recommended,
@@ -26,6 +27,10 @@ export default tseslint.config(
   {
     files: ["apps/sea/src/**/*.js", "apps/site/**/*.js"],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ["apps/site/site/tackle.js"],
+    languageOptions: { sourceType: "script", globals: { ...globals.browser, THREE: "readonly" } },
   },
   {
     rules: {

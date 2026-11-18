@@ -61,7 +61,11 @@ function boardRow(row) {
   avatar.style.background = `hsl(${parseInt(row.player.slice(2, 6), 16) % 360} 62% 68%)`;
   angler.append(avatar, tag("b", "", row.name));
   if (row.mine) angler.append(tag("em", "", "You"));
-  else if (row.bot) angler.append(tag("em", "bot", "AI angler"));
+  else if (row.bot) {
+    const mark = tag("em", "bot", "bot");
+    mark.title = "Bot angler run by the game";
+    angler.append(mark);
+  }
   const score = tag("td", "score");
   score.append(tag("b", "", String(row.score)), tag("small", "", "pts"));
   const proof = tag("a", "proof");
@@ -285,7 +289,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     if (key === boardKey) return;
     boardKey = key;
     boardList.replaceChildren(...rows.map(boardRow));
-    boardNote.textContent = rows.length ? "AI anglers sail and fish only while people are at sea, and their scores go through the same proof. Open a proof to see its transaction." : "No scores posted yet.";
+    boardNote.textContent = rows.length ? "Some anglers are bots run by the game. They fish only while people are at sea and post through the same proof. Open a proof to see its transaction." : "No scores posted yet.";
   }
 
   postButton.addEventListener("click", () => void post());
