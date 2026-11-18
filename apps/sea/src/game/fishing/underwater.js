@@ -30,7 +30,9 @@ const TINT = {
 };
 const LENGTH = { common: 0.42, uncommon: 0.56, rare: 0.75, mythic: 1.35, chest: 0.36 };
 const MODEL_LENGTH = 0.5;
-const MOUTH_AHEAD = 0.48;
+const MOUTH_AHEAD = 0.45;
+/** Where the line ties on, measured from the middle of the hook bend; hookPos is the bend, so a bait and a hooked lip sit in the curve and the line meets the shank. */
+const HOOK_EYE = new THREE.Vector3(0.03, 0.06, 0);
 const SURFACE_ABOVE = [0.55, 1.5, 2.6];
 const FLOOR_BELOW = [3.2, 1.4, 0.42];
 const FOG = [0.4, 0.37, 0.34];
@@ -300,13 +302,14 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
   const steel = new THREE.MeshStandardMaterial({ color: PALETTE.steel, roughness: 0.25, metalness: 0.9 });
   const hook = new THREE.Group();
   const bend = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.004, 6, 16, Math.PI * 1.3).rotateZ(Math.PI * 0.85), steel);
-  bend.position.y = -0.03;
-  const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.07, 5).translate(0, -0.005, 0), steel);
-  shank.position.x = 0.03;
-  hook.add(bend, shank);
+  bend.position.set(-HOOK_EYE.x, -HOOK_EYE.y, 0);
+  const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, HOOK_EYE.y + 0.01, 5).translate(0, -(HOOK_EYE.y + 0.01) / 2, 0), steel);
+  const eye = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.003, 5, 12), steel);
+  hook.add(bend, shank, eye);
   const worm = new THREE.Mesh(new THREE.TubeGeometry(wormCurve(), 24, 0.011, 6), new THREE.MeshStandardMaterial({ color: PALETTE.worm, roughness: 0.5 }));
   const spoon = new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 10).scale(0.55, 1.3, 0.18), new THREE.MeshStandardMaterial({ color: PALETTE.spoon, roughness: 0.15, metalness: 1 }));
-  spoon.position.y = -0.06;
+  spoon.position.set(-HOOK_EYE.x, -HOOK_EYE.y - 0.03, 0);
+  worm.position.set(-HOOK_EYE.x, -HOOK_EYE.y + 0.03, 0);
   const baits = [worm, spoon, new THREE.Group()];
   hook.add(...baits);
   scene.add(line, hook);
@@ -586,14 +589,14 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       shadowSwim.value = rod.pending ? 1.2 : 2.2;
       stepShadows(dt, rod, hookPos, t);
 
-      hook.position.copy(hookPos);
+      hook.position.copy(hookPos).add(HOOK_EYE);
       const fighting = rod.phase === "fight" && rod.fight;
       const strain = fighting ? clamp01((rod.fight.tension - 0.45) / 0.5) : 0;
       lineMaterial.color.copy(PALETTE.line).lerp(PALETTE.strain, strain);
       lineMaterial.opacity = fighting ? 1 : 0.8;
       const lineTop = mouth.set(fighting ? hookPos.x * 0.15 : hookPos.x * 0.4, SURFACE_ABOVE[depth] + 0.2, 0);
-      line.position.copy(hookPos);
-      const span = lineTop.sub(hookPos);
+      line.position.copy(hook.position);
+      const span = lineTop.sub(hook.position);
       const thick = fighting ? 1.8 + strain : 1;
       line.scale.set(thick, span.length(), thick);
       line.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, span.normalize());
