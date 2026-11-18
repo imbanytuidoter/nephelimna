@@ -30,6 +30,7 @@ const TINT = {
 };
 const LENGTH = { common: 0.42, uncommon: 0.56, rare: 0.75, mythic: 1.35, chest: 0.36 };
 const MODEL_LENGTH = 0.5;
+const MOUTH_AHEAD = 0.48;
 const SURFACE_ABOVE = [0.55, 1.5, 2.6];
 const FLOOR_BELOW = [3.2, 1.4, 0.42];
 const FOG = [0.4, 0.37, 0.34];
@@ -482,7 +483,7 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
     const yaw = dir > 0 ? 0 : Math.PI;
     settle(actor, dt, yaw, roll, pitch, length / MODEL_LENGTH);
     const hooked = rod.phase === "take" || rod.phase === "fight" || rod.phase === "landed";
-    if (hooked) hookPos.copy(fish.view).add(facing.set(Math.cos(fish.yaw), 0, -Math.sin(fish.yaw)).multiplyScalar(length * 0.48));
+    if (hooked) hookPos.copy(facing.set(MODEL_LENGTH * MOUTH_AHEAD, 0, 0).applyEuler(actor.rotation).multiplyScalar(length / MODEL_LENGTH)).add(fish.view);
   };
 
   const describe = (rod) => {
