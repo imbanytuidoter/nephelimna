@@ -389,3 +389,7 @@
   .v-tackle .tk-facts-panel, .v-tackle .tk-ledger-col, .v-tackle .tk-baits, .v-tackle .tk-score, .v-tackle .tk-close-box, .v-tackle .tk-step { --tk-pad: 18px; --tk-tag-notch: 16px; }
   .v-tackle .tk-step:not(.is-on) { transform: none; }
 }
+@media (max-width: 899px) {
+  .v-tackle .tk-casts-panel { background: rgba(6, 18, 23, 0.9); padding: 16px; border-radius: 6px; }
+  .v-tackle .tk-sealed .tk-h2-big, .v-tackle .tk-water .tk-h2-big { display: inline-block; background: rgba(6, 18, 23, 0.9); padding: 12px 16px; border-radius: 6px; }
+}
