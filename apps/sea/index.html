@@ -488,6 +488,11 @@
       #volume-range { width: 64px; }
       :is(#progress-open, #guide-open, #site-link) { min-height: 26px; padding: 2px 8px; font-size: 10px; border-radius: 6px; }
       #site-link svg { width: 12px; height: 12px; }
+      :is(#progress-open, #guide-open, #site-link) { position: fixed; left: max(16px, env(safe-area-inset-left)); }
+      #progress-open { top: 84px; }
+      #guide-open { top: 116px; }
+      #site-link { top: 148px; }
+      .on-deck #help { top: 190px; }
       #hud-game .nav > * { grid-column: 1; }
       #hud-game .nav > #minimap { grid-column: 2; grid-row: 1 / span 3; }
       #hud-game .nav > #chart-readout { grid-column: 2; grid-row: 4; justify-self: center; }
