@@ -406,7 +406,7 @@
 
     var waterMat = new THREE.MeshPhysicalMaterial({ color: HEX.water, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.05, metalness: 0.1 });
     var water = new THREE.Mesh(unit, waterMat);
-    water.position.set(2.5, 0.25, 2.5); water.scale.set(0.93, 0.01, 0.93);
+    water.position.set(2.5, 0.256, 2.5); water.scale.set(0.9, 0.012, 0.9); water.visible = false;
     group.add(water);
     g.water = water;
     var ringGeo = new THREE.TorusGeometry(0.3, 0.018, 6, 40); ringGeo.rotateX(Math.PI / 2);
@@ -758,9 +758,10 @@
     g.tiles.instanceColor.needsUpdate = true;
 
     var b = s.reduced ? 1 : smooth(k.approach);
-    var level = 0.25 + 0.36 * b;
-    g.water.scale.y = Math.max(0.01, level - 0.22);
-    g.water.position.y = 0.22 + g.water.scale.y / 2;
+    var level = 0.262 + 0.35 * b;
+    g.water.visible = b > 0.01;
+    g.water.scale.y = level - 0.25;
+    g.water.position.y = 0.25 + g.water.scale.y / 2;
     var f = k.cast;
     var fl = g.float;
     fl.visible = b > 0.02;
