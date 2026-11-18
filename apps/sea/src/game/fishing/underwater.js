@@ -589,7 +589,10 @@ export function createUnderwater({ baseUrl, reducedMotion }) {
       shadowSwim.value = rod.pending ? 1.2 : 2.2;
       stepShadows(dt, rod, hookPos, t);
 
-      hook.position.copy(hookPos).add(HOOK_EYE);
+      const hookedFish = fish?.placed && fish.rarity !== "chest" && (rod.phase === "take" || rod.phase === "fight" || rod.phase === "landed");
+      const side = hookedFish && Math.cos(fish.yaw) < 0 ? -1 : 1;
+      hook.scale.x = side;
+      hook.position.copy(hookPos).add(spot.set(HOOK_EYE.x * side, HOOK_EYE.y, HOOK_EYE.z));
       const fighting = rod.phase === "fight" && rod.fight;
       const strain = fighting ? clamp01((rod.fight.tension - 0.45) / 0.5) : 0;
       lineMaterial.color.copy(PALETTE.line).lerp(PALETTE.strain, strain);
