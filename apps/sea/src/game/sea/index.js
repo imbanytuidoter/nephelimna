@@ -246,7 +246,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     }
     const mark = { cell, until: Date.now() + SEA.netLifetimeMs };
     nets = [...nets, mark];
-    say(`Setting a hidden net in ${cellName(cell)}. Nobody can see which square it is in.`);
+    say(`Setting a hidden net in ${cellName(cell)}. The square stays encrypted.`);
     void ensureJoined(() => {})
       .then(async (c) => {
         const gate = await c.gates(lastCastBlock);

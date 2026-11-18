@@ -150,7 +150,7 @@ export function createMarket({ scene, site, patchMaterial, baseUrl, onChanged, o
     sell.textContent = `Sell everything for ${value}`;
   };
   const renderGear = () => {
-    const note = "Use the Net button in a chart square to set a hidden net for an hour. When a rival lands a common or uncommon fish there, you score it three times. Nobody sees where it is.";
+    const note = "Use the Net button in a chart square to set a hidden net for an hour. When a rival lands a common or uncommon fish there, you score it three times. Where you set it stays encrypted.";
     el("market-net-note").textContent = hold.hasNet ? note : `${note} ${NET.price} coins.`;
     buy.hidden = hold.hasNet;
     el("market-net-owned").hidden = !hold.hasNet;

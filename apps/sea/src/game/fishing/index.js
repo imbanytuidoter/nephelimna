@@ -376,7 +376,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
         active = pov.active;
         panel.hidden = !active;
         gear.showRod(active);
-        if (active) note(cellIndexAt(body.pos.x, body.pos.z) < 0 ? NOTES["off-chart"] : "Sealed waters. Nobody can see what is under a square, not even the server.", 5);
+        if (active) note(cellIndexAt(body.pos.x, body.pos.z) < 0 ? NOTES["off-chart"] : "What lives in this square is encrypted. Cast to find out.", 5);
       }
       aim.copy(pov.aim);
       right.set(-aim.z, 0, aim.x);
