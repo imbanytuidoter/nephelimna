@@ -1,4 +1,4 @@
-@font-face { font-family: "TK Panchang"; src: url("/site/fonts/Panchang-Variable.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "TK Nippo"; src: url("/site/fonts/Nippo-Variable.woff2") format("woff2"); font-weight: 200 700; font-display: swap; }
 @font-face { font-family: "TK Switzer"; src: url("/site/fonts/Switzer-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 
 .v-tackle {
@@ -13,7 +13,7 @@
   --tk-muted: rgba(238, 245, 243, 0.68);
   --tk-line: rgba(191, 243, 239, 0.14);
   --tk-drop: #01070a;
-  --tk-head: "TK Panchang", "Arial Black", ui-sans-serif, sans-serif;
+  --tk-head: "TK Nippo", "Arial Black", ui-sans-serif, sans-serif;
   --tk-body: "TK Switzer", ui-sans-serif, system-ui, sans-serif;
   --tk-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --tk-gut-l: max(16px, env(safe-area-inset-left, 0px));
@@ -44,7 +44,7 @@
 .v-tackle .tk-wrap { padding-left: var(--tk-gut-l); padding-right: var(--tk-gut-r); max-width: 1360px; margin: 0 auto; }
 .v-tackle .tk-mono { font-family: var(--tk-mono); font-weight: 500; }
 
-.v-tackle .tk-h2 { font-family: var(--tk-head); font-weight: 800; font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; color: var(--tk-ink); }
+.v-tackle .tk-h2 { font-family: var(--tk-head); font-weight: 700; font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; color: var(--tk-ink); }
 .v-tackle .tk-h2-big { font-size: clamp(30px, 3.8vw, 56px); line-height: 1.04; max-width: 18ch; }
 .v-tackle .tk-h3 { font-family: var(--tk-head); font-weight: 700; font-size: 20px; line-height: 1.2; letter-spacing: -0.005em; }
 .v-tackle .tk-lead { font-size: 19px; line-height: 1.55; color: var(--tk-muted); max-width: 46ch; }
@@ -112,7 +112,7 @@
 .v-tackle .tk-hero-copy { width: 100%; max-width: 1360px; margin: 0 auto; padding: 120px var(--tk-gut-r) 48px var(--tk-gut-l); min-width: 0; }
 .v-tackle .tk-hero-eyebrow { font-weight: 600; font-size: 16px; color: var(--tk-gold); margin-bottom: 16px; }
 .v-tackle .tk-hero-title {
-  font-family: var(--tk-head); font-weight: 800; font-size: clamp(34px, 5.2vw, 80px); line-height: 1.04; letter-spacing: -0.015em;
+  font-family: var(--tk-head); font-weight: 700; font-size: clamp(34px, 5.2vw, 80px); line-height: 1.04; letter-spacing: -0.015em;
   color: var(--tk-ink); margin-bottom: 24px; text-shadow: 3px 3px 0 var(--tk-drop);
 }
 .v-tackle .tk-line { display: block; overflow: hidden; padding: 0 0.08em 0.06em 0; margin-bottom: -0.06em; }
@@ -184,7 +184,7 @@
 }
 .v-tackle .tk-step.is-done { opacity: 0.7; transform: none; }
 .v-tackle .tk-step.is-on { opacity: 1; transform: none; box-shadow: inset 4px 0 0 var(--tk-gold), var(--tk-shadow); }
-.v-tackle .tk-step-n { grid-row: 1 / span 2; font-family: var(--tk-head); font-weight: 800; font-size: 40px; line-height: 1; color: var(--tk-gold); }
+.v-tackle .tk-step-n { grid-row: 1 / span 2; font-family: var(--tk-head); font-weight: 700; font-size: 40px; line-height: 1; color: var(--tk-gold); }
 .v-tackle .tk-step h3 { grid-column: 2; font-family: var(--tk-head); font-weight: 700; font-size: 20px; line-height: 1.25; }
 .v-tackle .tk-step p { grid-column: 2 / span 2; font-size: 16px; line-height: 1.55; color: var(--tk-muted); }
 .v-tackle .tk-step .tk-step-time { grid-column: 3; grid-row: 1; font-family: var(--tk-mono); font-size: 14px; font-weight: 500; color: var(--tk-foam); white-space: nowrap; }
@@ -344,3 +344,48 @@
 .v-tackle .tk-hero-live.on { opacity: 1; }
 .v-tackle .tk-row-empty { color: var(--tk-muted); }
 .v-tackle .tk-score a.tk-who-link { color: inherit; text-decoration: none; }
+
+/* Bait shop tags: price labels with a notch and a punched hole, sand for lists and info, gold for what matters most. */
+.v-tackle {
+  --tk-sand: #e9dcc0;
+  --tk-sand-2: #f3ead8;
+  --tk-tag-notch: 22px;
+}
+.v-tackle .tk-tag-sand, .v-tackle .tk-casts .tk-row, .v-tackle .tk-facts-panel, .v-tackle .tk-ledger-col, .v-tackle .tk-baits, .v-tackle .tk-score, .v-tackle .tk-step {
+  --tk-ink: #17261f; --tk-muted: #3f4f47; --tk-line: rgba(23, 38, 31, 0.18); --tk-foam: #1f6f6f; --tk-teal: #1f6f6f; --tk-gold: #8a5a12;
+  background: var(--tk-sand); color: var(--tk-ink);
+}
+.v-tackle .tk-ledger-shut, .v-tackle .tk-close-box, .v-tackle .tk-step.is-on {
+  --tk-ink: #1d1404; --tk-muted: #4a3510; --tk-line: rgba(29, 20, 4, 0.2); --tk-foam: #4a3510; --tk-teal: #4a3510; --tk-gold: #1d1404;
+  background: #f0c37a; color: var(--tk-ink);
+}
+.v-tackle .tk-facts-panel, .v-tackle .tk-ledger-col, .v-tackle .tk-baits, .v-tackle .tk-score, .v-tackle .tk-close-box, .v-tackle .tk-chart, .v-tackle .tk-step, .v-tackle .tk-casts .tk-row {
+  position: relative; border-radius: 4px; box-shadow: none; border-top: 0;
+  clip-path: polygon(var(--tk-tag-notch) 0, 100% 0, 100% 100%, var(--tk-tag-notch) 100%, 0 50%);
+  padding-left: calc(var(--tk-pad) + var(--tk-tag-notch) + 10px);
+}
+.v-tackle .tk-facts-panel::before, .v-tackle .tk-ledger-col::before, .v-tackle .tk-baits::before, .v-tackle .tk-score::before, .v-tackle .tk-close-box::before, .v-tackle .tk-chart::before, .v-tackle .tk-step::before, .v-tackle .tk-casts .tk-row::before {
+  content: ""; position: absolute; left: calc(var(--tk-tag-notch) + 2px); top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--tk-deep);
+}
+.v-tackle .tk-ai { color: var(--tk-sand-2); }
+.v-tackle .tk-chart { background: var(--tk-sea); }
+.v-tackle .tk-chart .tk-ai { color: var(--tk-deep); }
+.v-tackle .tk-casts-panel { background: none; box-shadow: none; padding: 0; }
+.v-tackle .tk-casts-panel .tk-panel-head { padding-bottom: 16px; }
+.v-tackle .tk-casts .tk-rows { display: grid; gap: 8px; }
+.v-tackle .tk-casts .tk-row { --tk-pad: 16px; --tk-tag-notch: 16px; min-height: 52px; padding-top: 8px; padding-bottom: 8px; padding-right: 16px; border-bottom: 0; }
+.v-tackle .tk-casts .tk-row::before { width: 8px; height: 8px; margin-top: -4px; }
+.v-tackle .tk-casts .tk-sq, .v-tackle .tk-tag-sand .tk-sq { background: rgba(31, 111, 111, 0.14); }
+.v-tackle .tk-casts-panel .tk-panel-foot { padding-top: 16px; }
+.v-tackle .tk-step { --tk-pad: 24px; padding-top: 22px; padding-bottom: 22px; padding-right: 24px; opacity: 1; transform: none; transition: background-color 420ms var(--tk-ease), transform 520ms var(--tk-ease); }
+.v-tackle .tk-step:not(.is-on) { transform: translateX(14px); }
+.v-tackle .tk-step.is-done { background: #d9ccb0; }
+.v-tackle .tk-step.is-on { box-shadow: none; }
+.v-tackle .tk-score .tk-table caption { padding-top: 20px; }
+.v-tackle .tk-close-box { --tk-pad: 56px; }
+.v-tackle .tk-close-box .tk-btn-gold { background: #1d1404; color: #f0c37a; border-color: #1d1404; }
+.v-tackle .tk-close-box .tk-btn-line { background: transparent; color: #1d1404; border-color: #1d1404; }
+@media (max-width: 899px) {
+  .v-tackle .tk-facts-panel, .v-tackle .tk-ledger-col, .v-tackle .tk-baits, .v-tackle .tk-score, .v-tackle .tk-close-box, .v-tackle .tk-step { --tk-pad: 18px; --tk-tag-notch: 16px; }
+  .v-tackle .tk-step:not(.is-on) { transform: none; }
+}
