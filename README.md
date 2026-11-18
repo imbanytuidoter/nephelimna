@@ -1,6 +1,6 @@
 # Nephelimna
 
-A 3D sea fishing game on one always-on sealed sea: what lives in every square, your depth and bait, the hidden nets and every total stay encrypted on Zama FHEVM.
+A 3D sea fishing game on one always-on encrypted sea: what lives in every square, your depth and bait, the hidden nets and every total stay encrypted on Zama FHEVM.
 
 Built for the Zama Developer Program, Mainnet Season 5, Confidential Gaming. Sepolia only.
 
@@ -16,9 +16,11 @@ No wallet and no test ETH needed. The page makes a session key in your browser a
 2. Sail into the 8 by 8 chart squares around the island (`W A S D`, chart on `M`), press `G` to drop anchor.
 3. Pick depth (`1 2 3`) and bait (`B`), hold `Space` or the mouse to aim, let go to cast. Your first cast puts your boat on chain, once per browser.
 4. The float waits while the cast is sealed, mined and decrypted for you; the big button shows each step with its seconds. Then the fish bites and you reel it in, or the line comes back empty.
-5. Your total is shown at the top and only you can read it. **Post my score** opens it once with a proof and puts it on the **Board**.
+5. Your total is shown at the top and only you can read it. **Post my score** opens it once with a proof and puts it on the **Leaderboard**.
 
-Coins, the fish market, flags and the net purchase stay in the browser. Every fish comes from the sealed sea.
+Coins, the fish market, flags and the net purchase are kept in the browser and backed up on the save server under your progress code, not on chain. Every fish comes from the encrypted sea.
+
+AI anglers run by the sea service fish only while people are at sea. They are marked AI on the leaderboard and over their boats, and they cast and post through the same contract as everyone else.
 
 ## What is encrypted
 
@@ -113,9 +115,11 @@ cd contracts && npx hardhat run scripts/live-sea.ts --network sepolia
 
 ## Known limits
 
-- Guest keys live in the browser's local storage. Clearing it loses the boat and its total.
+- Guest keys live in the browser's local storage and are not part of the progress code. Clearing it loses the boat and its sealed total; the code brings back coins, hold and position.
 - The faucet and the keeper are paid by one key; the faucet is rate limited per address, per IP and per day.
-- Coins, the net purchase and flags are local to the browser and are not on chain.
+- The eight net slots are shared by every player and joining is free, so many fresh boats could hold all of them.
+- A posted score waits for the keeper to relay its proof. While the keeper is down, that player cannot post again.
+- Coins, the net purchase and flags are kept in the browser and on the save server, not on chain.
 - A posted total is public at that moment; the difference between two posts shows what was caught in between. The player decides when to post.
 - The sonar fires often because rare fish are common in the current sea tables.
 - Wallet connect is not wired yet; every player is a guest.

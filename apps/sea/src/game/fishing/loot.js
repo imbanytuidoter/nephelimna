@@ -6,7 +6,7 @@ export function rollLoot(random, hold) {
     const coins = Math.round(LOOT.coins[0] + random() * (LOOT.coins[1] - LOOT.coins[0]));
     return { kind: "coins", coins, text: `${coins} coins` };
   }
-  if (roll < 0.85) return { kind: "twin", twin: LOOT.twin, text: `Twin hook: your next ${LOOT.twin} fish count double` };
+  if (roll < 0.85) return { kind: "twin", twin: LOOT.twin, text: `Twin hook: your next ${LOOT.twin} fish count double in your hold` };
   if (hold.hasNet) return { kind: "coins", coins: LOOT.netRefund, text: `${LOOT.netRefund} coins` };
   return { kind: "net", text: "A hidden net. Set it in a chart square from the net button." };
 }

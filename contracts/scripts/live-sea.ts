@@ -97,8 +97,8 @@ await step("fund", async () => {
 });
 
 await step("join", async () => {
-  await measure("join", () => sea.connect(keeper).join(keeper.address));
-  for (const wallet of others) await (await sea.connect(wallet).join(wallet.address)).wait();
+  await measure("join", () => sea.connect(keeper).join(keeper.address, "0x"));
+  for (const wallet of others) await (await sea.connect(wallet).join(wallet.address, "0x")).wait();
 });
 
 await step("fill", async () => {

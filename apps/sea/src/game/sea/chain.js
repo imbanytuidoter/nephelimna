@@ -19,8 +19,17 @@ const BALANCE_TRIES = 40;
 const RECEIPT_POLL_MS = 1000;
 const BROADCAST_TRIES = 4;
 const BLOCK_WAIT_MS = 6000;
+const ENCRYPT_TIMEOUT_MS = 90_000;
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const within = (ms, task, message) => Promise.race([task, pause(ms).then(() => Promise.reject(new Error(message)))]);
+
+export class CastUnread extends Error {
+  constructor(cause) {
+    super("The cast landed on chain but could not be read yet.", { cause });
+    this.landed = true;
+  }
+}
 
 async function retry(tries, run) {
   for (let attempt = 1; ; attempt++) {
@@ -114,13 +123,17 @@ export function createSeaChain({ rpcUrl, address, key }) {
     /** A node behind the one that mined the cast still serves the previous cast's handles, so the result is read at the cast's own block. */
     async cast(cell, depth, bait, onStage = () => {}) {
       onStage("Sealing your bait");
-      const enc = await encrypt([packChoice(depth, bait)]);
+      const enc = await within(ENCRYPT_TIMEOUT_MS, encrypt([packChoice(depth, bait)]), "sealing the bait timed out");
       const receipt = await send("cast", [cell, enc.encryptedValues[0], enc.inputProof], SEA.castGas, (turn) => onStage(turn ? "Line out on Sepolia" : "Waiting for your last cast"));
       onStage("Reading your catch");
-      const handles = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "castResult", args: [account.address], blockNumber: receipt.blockNumber }));
-      const clear = await retry(DECRYPT_TRIES, () => sdk.decryption.decryptValues(handles.map((encryptedValue) => ({ encryptedValue, contractAddress: address })), { timeout: DECRYPT_TIMEOUT_MS }));
-      const [weight, rareNear, levNear, snagged] = handles.map((handle) => clear[handle]);
-      return { points: Number(weight), rareNear: Boolean(rareNear), leviathanNear: Boolean(levNear), snagged: Boolean(snagged), blockNumber: receipt.blockNumber };
+      try {
+        const handles = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "castResult", args: [account.address], blockNumber: receipt.blockNumber }));
+        const clear = await retry(DECRYPT_TRIES, () => sdk.decryption.decryptValues(handles.map((encryptedValue) => ({ encryptedValue, contractAddress: address })), { timeout: DECRYPT_TIMEOUT_MS }));
+        const [weight, rareNear, levNear, snagged] = handles.map((handle) => clear[handle]);
+        return { points: Number(weight), rareNear: Boolean(rareNear), leviathanNear: Boolean(levNear), snagged: Boolean(snagged), blockNumber: receipt.blockNumber };
+      } catch (error) {
+        throw new CastUnread(error);
+      }
     },
     async total(blockNumber) {
       const handle = await retry(READ_TRIES, () => publicClient.readContract({ address, abi, functionName: "scoreHandle", args: [account.address], ...(blockNumber ? { blockNumber } : {}) }));

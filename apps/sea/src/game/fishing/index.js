@@ -14,7 +14,7 @@ import { ROD, castDistance, createRod, flightTime, stepRod } from "./rod.js";
 import { CHEST, LEVIATHAN, rollFish } from "./species.js";
 
 const LAND_LEVEL = -0.4;
-const REST_ELEVATION = 0.5;
+export const REST_ELEVATION = 0.5;
 const BACK_SWING = 0.8;
 const WHIP_TIME = 0.2;
 const ROD_FOLLOW = 0.3;
@@ -51,6 +51,8 @@ const NOTES = {
   "off-chart": "Fish inside the chart squares. Every cast there is a sealed transaction on Sepolia.",
   "sea-closed": "Cannot reach the chain right now. Try again in a moment.",
   "chain-failed": "The cast did not reach the chain. Try again.",
+  kept: "This catch was already counted on chain, so it went straight to your hold.",
+  "chain-unread": "Your cast landed on chain but could not be read yet. Its points still count.",
   snagged: "A hidden net took that fish. A rival scores it.",
   "line-left": "Your line stays out. Cast again. The catch shows up once it is decrypted.",
   "lines-busy": "Three sealed lines are still out. Wait for one to surface.",
@@ -185,7 +187,8 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
   action.addEventListener("pointercancel", release);
   netButton.addEventListener("click", () => (netPressed = true));
   addEventListener("keydown", (e) => {
-    if (e.repeat) return;
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target instanceof Element && e.target.closest("input, select, textarea, dialog")) return;
     if (e.code === "KeyF" || e.code === "Space") {
       e.preventDefault();
       down();
@@ -225,7 +228,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
   };
 
   const outcome = (answer) => {
-    if (answer.status === "failed") return { caught: false, event: "chain-failed" };
+    if (answer.status === "failed") return { caught: false, event: answer.landed ? "chain-unread" : "chain-failed" };
     const { points, snagged, rareNear, leviathanNear } = answer.result;
     if (leviathanNear) card.showNote("Sonar", "Something huge is moving in a square next to this one.");
     else if (rareNear) card.showNote("Sonar", "A rare fish is in a square next to this one.");
@@ -261,6 +264,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
         land(result);
         note(`Your sealed line in ${where} surfaced with a catch.`, 5);
       } else if (result.event === "chain-failed") note(`The sealed line in ${where} did not reach the chain.`, 5);
+      else if (result.event === "chain-unread") note(`The sealed line in ${where} landed but could not be read yet. Its points still count.`, 5);
       else if (result.event === "snagged") note(`Your sealed line in ${where}: a hidden net took the fish.`, 5);
       else note(`Your sealed line in ${where} came back empty.`, 5);
     }
@@ -325,6 +329,10 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
         splash(fishAt, 0.8, "splash_medium", 0.8);
         land(before.catch);
         landing = { kind: before.catch.species.rarity === "chest" ? "chest" : "fish", size: TROPHY_SIZE[before.catch.species.rarity], time: 0 };
+        break;
+      case "kept":
+        land(before.catch);
+        note(NOTES.kept);
         break;
       case "snapped":
         audio.play("snap", 1);
@@ -537,7 +545,7 @@ export function createFishing({ scene, body, patchMaterial, market, baseUrl, flo
       if (time > noteUntil && message.textContent) message.textContent = "";
       const twinText = market.hold.twin > 0 ? `x2 on your next ${market.hold.twin} fish` : "";
       if (bonus.textContent !== twinText) bonus.textContent = twinText;
-      const netState = !market.hold.hasNet ? ["Net", `${NET.price} coins`, `Buy a hidden net at the fish market for ${NET.price} coins`] : sea.netsOut() ? ["Net", "Out", "Your hidden net is set for an hour"] : ["Net", "Set 1 h", "Set a hidden net in this square for an hour. Rivals' common and uncommon catches here score three times for you"];
+      const netState = !market.hold.hasNet ? ["Net", `${NET.price} coins`, `Buy a hidden net at the fish market for ${NET.price} coins`] : sea.netsOut() ? ["Net", `${sea.netCount()} of ${sea.netLimit} out`, `${sea.netCount()} of your ${sea.netLimit} hidden nets ${sea.netCount() === 1 ? "is" : "are"} set. Each one stays for an hour`] : ["Net", "Set 1 h", "Set a hidden net in this square for an hour. Rivals' common and uncommon catches here score three times for you"];
       const netKey = netState.join("|");
       if (netButton.dataset.key !== netKey) {
         netButton.dataset.key = netKey;

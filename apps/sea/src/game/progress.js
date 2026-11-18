@@ -69,22 +69,34 @@ export function createProgress({ baseUrl }) {
     const entered = el("progress-enter").value.trim().toLowerCase();
     if (!CODE_PATTERN.test(entered)) return say("That is not a progress code. It is 32 characters: digits and letters a to f.");
     say("Looking for your save...");
+    let result;
     try {
       const response = await fetch(new URL("load", api), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: entered }) });
-      const result = await response.json();
+      result = await response.json();
       if (!response.ok) return say(result.reason ?? "Could not load that save.");
-      const saved = JSON.parse(result.data);
-      frozen = true;
-      freezeSession();
+    } catch (error) {
+      console.warn("restore failed", error);
+      return say("Could not reach the server. Try again.");
+    }
+    let saved;
+    try {
+      saved = JSON.parse(result.data);
+    } catch (error) {
+      console.warn("save unreadable", error);
+      return say("That save could not be read.");
+    }
+    try {
       if (typeof saved.hold === "string") localStorage.setItem(HOLD_KEY, saved.hold);
       if (typeof saved.session === "string") localStorage.setItem(SESSION_KEY, saved.session);
       localStorage.setItem(CODE_KEY, entered);
-      say("Restored. Reloading...");
-      setTimeout(() => location.reload(), 400);
     } catch (error) {
-      console.warn("restore failed", error);
-      say("Could not reach the server. Try again.");
+      console.warn("browser storage refused the save", error);
+      return say("This browser does not allow saving here, so the code cannot be restored.");
     }
+    frozen = true;
+    freezeSession();
+    say("Restored. Reloading...");
+    setTimeout(() => location.reload(), 400);
   };
 
   const opener = el("progress-open");

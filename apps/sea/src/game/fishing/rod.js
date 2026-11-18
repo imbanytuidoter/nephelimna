@@ -47,6 +47,12 @@ function plan(rod, outcome, random, spooked) {
   return to(rod, "waiting", { wait, nibbles, nibbleAt: wait - nibbles * ROD.nibbleGap, catch: outcome, spooked, slide: random() < 0.3 });
 }
 
+/** A sealed catch is already scored on chain, so reeling in early or lifting the anchor keeps the fish instead of dropping it. */
+function reelIn(rod) {
+  if (rod.sealed && rod.catch) return { rod: to(rod, "retrieving", { catch: null, fight: null }), events: ["kept"] };
+  return { rod: to(rod, "retrieving", { catch: null }), events: ["reeled"] };
+}
+
 export function stepRod(rod, dt, input, world) {
   const time = rod.time + dt;
   const one = (next, event) => ({ rod: next, events: event ? [event] : [] });
@@ -73,7 +79,7 @@ export function stepRod(rod, dt, input, world) {
         world.leave();
         return one(to(rod, "retrieving", { catch: null, pending: false }), "line-left");
       }
-      if (!world.canFish) return one(to(rod, "retrieving", { catch: null }), "reeled");
+      if (!world.canFish) return reelIn(rod);
       if (rod.pending) {
         const verdict = world.verdict();
         if (!verdict) {
@@ -90,7 +96,7 @@ export function stepRod(rod, dt, input, world) {
         return one(plan({ ...rod, pending: false, sealed: true }, verdict, world.random, false), "answered");
       }
       const hold = input.held ? rod.hold + dt : 0;
-      if (hold >= ROD.holdToRetrieve) return one(to(rod, "retrieving", { catch: null }), "reeled");
+      if (hold >= ROD.holdToRetrieve) return reelIn(rod);
       if (time >= rod.wait) {
         if (!rod.catch) return one(to(rod, "retrieving"), "empty");
         return one(to(rod, "take", { window: ROD.takeMin + world.random() * (ROD.takeMax - ROD.takeMin) }), "take");
@@ -101,7 +107,7 @@ export function stepRod(rod, dt, input, world) {
       return one({ ...rod, time, hold }, nibbled ? "nibble" : null);
     }
     case "take":
-      if (!world.canFish) return one(to(rod, "retrieving", { catch: null }), "reeled");
+      if (!world.canFish) return reelIn(rod);
       if (input.pressed) return one(to(rod, "fight", { fight: startFight(rod.catch.species, rod.distance, world.random) }), "hooked");
       if (time > rod.window) {
         if (rod.spooked && !rod.sealed) return one(to(rod, "retrieving", { catch: null }), "missed");
@@ -109,7 +115,7 @@ export function stepRod(rod, dt, input, world) {
       }
       return one({ ...rod, time });
     case "fight": {
-      if (!world.canFish) return one(to(rod, "lost", { catch: null, fight: null }), "snapped");
+      if (!world.canFish) return rod.sealed ? reelIn(rod) : one(to(rod, "lost", { catch: null, fight: null }), "snapped");
       const step = stepFight(rod.fight, dt, input.held, world.random);
       if (step.end === "landed") return { rod: to(rod, "landed", { fight: step.fight }), events: [...step.events, "landed"] };
       if (step.end) return { rod: to(rod, "lost", { catch: null, fight: step.fight }), events: [...step.events, step.end] };

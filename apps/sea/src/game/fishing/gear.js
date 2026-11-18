@@ -296,12 +296,17 @@ export function createGear({ scene, patchMaterial, baseUrl }) {
         return;
       }
       rope.step(dt, tip, end, length, floor, taut);
-      for (let i = 0; i < ROPE_POINTS; i++) {
-        linePositions[i * 3] = rope.x[i];
-        linePositions[i * 3 + 1] = rope.y[i];
-        linePositions[i * 3 + 2] = rope.z[i];
+      const segments = lineGeometry.attributes.instanceStart.data;
+      for (let i = 0; i < ROPE_POINTS - 1; i++) {
+        const o = i * 6;
+        segments.array[o] = rope.x[i];
+        segments.array[o + 1] = rope.y[i];
+        segments.array[o + 2] = rope.z[i];
+        segments.array[o + 3] = rope.x[i + 1];
+        segments.array[o + 4] = rope.y[i + 1];
+        segments.array[o + 5] = rope.z[i + 1];
       }
-      lineGeometry.setPositions(linePositions);
+      segments.needsUpdate = true;
       tint.copy(SLACK).lerp(TIGHT, THREE.MathUtils.smoothstep(strain, 0.55, 0.9)).lerp(BREAKING, THREE.MathUtils.smoothstep(strain, 0.92, 1.1));
       lineMaterial.color.copy(tint);
       lineMaterial.linewidth = 1.4 + 1.2 * THREE.MathUtils.smoothstep(strain, 0.9, 1.1);

@@ -27,7 +27,7 @@ export function helpRows({ deck, touch, nearMarket, hasNet, netPrice }) {
     add(["Space"], "Hold to aim, let go to cast, hold to reel");
   }
   add(["1", "2", "3"], "Depth of the hook. Each fish lives at one depth", "depth");
-  add(["B"], "Bait: worm for common fish, spoon for better ones, live fish for mythic", "KeyB");
+  add(["B"], "Bait: worm for common and uncommon, spoon for uncommon to mythic, live fish for mythic", "KeyB");
   add(["N"], hasNet ? "Set a hidden net in this square for an hour" : `Net: buy it at the fish market for ${netPrice} coins`, hasNet ? "KeyN" : null);
   add(["I"], "Your hold: catch, chests, gear", "KeyI");
   add(["G"], "Weigh anchor, back to the helm", "KeyG");

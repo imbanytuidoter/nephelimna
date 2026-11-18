@@ -9,6 +9,7 @@ const PAINT_MS = 250;
 const TOTAL_EVERY_MS = 60_000;
 const GAS_FLOOR = 300_000_000_000_000n;
 const MY_CASTS = 12;
+const DRIP_TIMEOUT_MS = 30_000;
 const JOIN_TRIES = 3;
 const JOIN_RETRY_MS = 5000;
 const EXPLORER = "https://sepolia.etherscan.io/tx/";
@@ -147,11 +148,15 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     }
   }
 
+  let totalSeq = 0;
+  /** A slow read started earlier must not overwrite a newer total that finished first. */
   async function refreshTotal(blockNumber) {
     if (!joined) return;
     totalAt = Date.now();
+    const seq = ++totalSeq;
     try {
-      total = await (await ensureChain()).total(blockNumber);
+      const value = await (await ensureChain()).total(blockNumber);
+      if (seq === totalSeq) total = value;
     } catch (error) {
       console.warn("total not read", error);
     }
@@ -178,9 +183,9 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     }
     if ((await c.balance()) < GAS_FLOOR) {
       onStage("Getting test ETH");
-      const response = await fetch(new URL("drip", api), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: c.address }) });
-      if (!response.ok) throw new Error(response.status === 429 ? "The faucet is busy. Try again in a few minutes." : "The faucet did not answer. Try again.");
-      if (!(await c.waitForGas(GAS_FLOOR))) throw new Error("Test ETH did not arrive yet. Try again.");
+      const response = await fetch(new URL("drip", api), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: c.address }), signal: AbortSignal.timeout(DRIP_TIMEOUT_MS) }).catch(() => null);
+      if (!response?.ok) throw new GateError(response?.status === 429 ? "The faucet is busy. Try again in a few minutes." : "The faucet did not answer. Try again.");
+      if (!(await c.waitForGas(GAS_FLOOR))) throw new GateError("Test ETH did not arrive yet. Try again.");
     }
     onStage("Putting your boat on chain");
     await joinOnce(c);
@@ -217,8 +222,11 @@ export function createSea({ baseUrl, cellName, nameOf }) {
       })
       .catch((error) => {
         console.error("sealed cast failed", error);
-        failure = error instanceof Error ? error.message : "The cast did not reach the chain.";
+        const landed = error?.landed === true;
+        failure = error instanceof GateError ? error.message : landed ? "Your last cast landed but could not be read yet. Its points still count." : "The cast did not reach the chain. Try again.";
+        if (landed) void refreshTotal();
         ticket.status = "failed";
+        ticket.landed = landed;
         ticket.error = failure;
       });
     return ticket;
@@ -263,7 +271,7 @@ export function createSea({ baseUrl, cellName, nameOf }) {
       const gate = await c.gates(lastCastBlock);
       if (gate.casts === gate.castsAtPost) throw new GateError("Cast again before you post a new score.");
       await c.postScore(nameOf());
-      say("Opening your total with a proof. It shows on the board in about half a minute.");
+      say("Opening your total with a proof. It shows on the board in about a minute.");
     } catch (error) {
       posting = false;
       if (error instanceof GateError) failure = error.message;
@@ -305,6 +313,8 @@ export function createSea({ baseUrl, cellName, nameOf }) {
     cast,
     setNet,
     netsOut: () => liveNets().length > 0,
+    netCount: () => liveNets().length,
+    netLimit: SEA.netsPerPlayer,
     takeNote: () => notes.shift() ?? null,
     overlay: () => ({ casts: myCasts.map((entry) => ({ cell: entry.cell, mine: true })), lake: null, leviathan: null }),
     update() {

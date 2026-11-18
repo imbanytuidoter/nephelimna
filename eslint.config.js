@@ -24,7 +24,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
-    files: ["apps/sea/src/**/*.js"],
+    files: ["apps/sea/src/**/*.js", "apps/site/**/*.js"],
     languageOptions: { globals: globals.browser },
   },
   {

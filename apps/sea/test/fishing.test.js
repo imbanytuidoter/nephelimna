@@ -131,6 +131,17 @@ describe("rod", () => {
     expect(rod.phase).toBe("retrieving");
   });
 
+  test("a sealed catch already counted on chain is kept when the line comes in early", () => {
+    const world = worldWith(fishOf(0.5, 0.7));
+    const waiting = { ...until(cast(world).rod, world, "waiting").rod, sealed: true };
+    const reeled = run(waiting, world, ROD.holdToRetrieve + 0.1, hold);
+    expect(reeled.events).toContain("kept");
+    expect(reeled.events).not.toContain("reeled");
+    const anchorUp = stepRod(waiting, FRAME, idle, { ...world, canFish: false });
+    expect(anchorUp.events).toEqual(["kept"]);
+    expect(anchorUp.rod.catch).toBeNull();
+  });
+
   const hook = (outcome, seed = 9) => {
     const world = worldWith(outcome, seed);
     const take = until(cast(world, 1.2).rod, world, "take").rod;

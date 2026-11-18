@@ -6,6 +6,7 @@ import { boatName, cleanName, loadName, saveName } from "./names.js";
 import { createTrack } from "./track.js";
 
 const SEND_EVERY = 0.25;
+const SEND_TIMEOUT_MS = 5_000;
 const SMOOTH = 12;
 const STALE_AFTER = 3;
 const FAILURES_BEFORE_CLEAR = 6;
@@ -14,11 +15,19 @@ const TAG_HEIGHT = 3.4;
 const TAG_RANGE = 450;
 
 function newId() {
-  const stored = sessionStorage.getItem("sea-presence-id");
-  if (stored && /^[0-9a-f]{16}$/.test(stored)) return stored;
+  try {
+    const stored = sessionStorage.getItem("sea-presence-id");
+    if (stored && /^[0-9a-f]{16}$/.test(stored)) return stored;
+  } catch (error) {
+    console.warn("session storage unavailable", error);
+  }
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   const id = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  sessionStorage.setItem("sea-presence-id", id);
+  try {
+    sessionStorage.setItem("sea-presence-id", id);
+  } catch (error) {
+    console.warn("session storage unavailable", error);
+  }
   return id;
 }
 
@@ -130,6 +139,7 @@ export function createPresence({ scene, patchMaterial, baseUrl, body, camera }) 
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id, name, t: Math.round(performance.now()) / 1000, x: body.pos.x, y: body.pos.y, z: body.pos.z, yaw: Math.atan2(-fwd.z, fwd.x) }),
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
       if (!response.ok) throw new Error(`presence ${response.status}`);
       const data = await response.json();
