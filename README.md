@@ -5,7 +5,7 @@ A 3D sea fishing game on one always-on sealed sea: what lives in every square, y
 Built for the Zama Developer Program, Mainnet Season 5, Confidential Gaming. Sepolia only.
 
 - Play: https://nephelimna.imbanytui.xyz/sea/
-- Contract: [`0x755cBa7f208918E2806aaeeE511a7d57c1749eEA`](https://sepolia.etherscan.io/address/0x755cBa7f208918E2806aaeeE511a7d57c1749eEA) (`NepheSea`, Sepolia)
+- Contract: [`0x05371fD71D88D57c5A6B7419538bF50601237c2E`](https://sepolia.etherscan.io/address/0x05371fD71D88D57c5A6B7419538bF50601237c2E) (`NepheSea`, Sepolia)
 - Video: VIDEO_ID
 
 ## Play it in two minutes
