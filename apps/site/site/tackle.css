@@ -398,3 +398,12 @@
 .v-tackle .tk-hero-img { opacity: 0; transition: opacity 600ms ease; }
 .v-tackle .tk-hero.show-still .tk-hero-img { opacity: 1; }
 .v-tackle .tk-hero-live { transition: opacity 2.2s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.v-tackle .tk-baits { align-items: center; padding-top: 28px; padding-bottom: 28px; }
+.v-tackle .tk-baits-head p { margin-top: 8px; font-size: 15px; line-height: 1.5; color: var(--tk-muted); max-width: 30ch; }
+.v-tackle .tk-baits dl { align-items: stretch; }
+.v-tackle .tk-baits dl div { display: grid; align-content: center; gap: 10px; padding: 4px 0 4px 20px; }
+.v-tackle .tk-baits dt { font-family: var(--tk-head); font-size: 22px; font-weight: 700; line-height: 1.1; color: var(--tk-ink); }
+.v-tackle .tk-baits dd { display: grid; gap: 8px; margin: 0; font-size: 14px; font-weight: 500; color: var(--tk-muted); }
+.v-tackle .tk-rar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; max-width: 160px; }
+.v-tackle .tk-rar i { height: 8px; border-radius: 2px; background: rgba(23, 38, 31, 0.14); }
+.v-tackle .tk-rar i.on { background: var(--tk-gold); }
