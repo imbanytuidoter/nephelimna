@@ -24,10 +24,10 @@ describe("volume control", () => {
   });
 
   test("dragging sets the level, the speaker mutes, and a second tap brings back the level from before", () => {
-    const nodes = { volume: node(), "volume-toggle": node(), "volume-range": node() };
+    const nodes = { volume: node(), "volume-toggle": node(), "volume-range": node(), music: node(), "music-toggle": node(), "music-range": node() };
     vi.stubGlobal("document", { getElementById: (id) => nodes[id] });
     let level = 1;
-    const audio = { get volume() { return level; }, setVolume: (v) => (level = Math.min(1, Math.max(0, v))) };
+    const audio = { get volume() { return level; }, setVolume: (v) => (level = Math.min(1, Math.max(0, v))), music: 0.6, setMusic: (v) => (audio.music = v), onMusic() {} };
     createVolume({ audio });
     const range = nodes["volume-range"];
     const toggle = nodes["volume-toggle"];
@@ -43,5 +43,25 @@ describe("volume control", () => {
     toggle.fire("click");
     expect(level).toBeCloseTo(0.35);
     expect(range.attrs["aria-valuetext"]).toBe("35 percent");
+  });
+
+  test("the music slider stays hidden until the track is ready, then sets its own level and mutes", () => {
+    const nodes = { volume: node(), "volume-toggle": node(), "volume-range": node(), music: Object.assign(node(), { hidden: true }), "music-toggle": node(), "music-range": node() };
+    vi.stubGlobal("document", { getElementById: (id) => nodes[id] });
+    let ready = () => {};
+    const audio = { volume: 1, setVolume: (v) => v, music: 0.6, setMusic: (v) => (audio.music = v), onMusic: (fn) => (ready = fn) };
+    createVolume({ audio });
+    expect(nodes.music.hidden).toBe(true);
+    ready(0.6);
+    expect(nodes.music.hidden).toBe(false);
+    expect(nodes["music-range"].value).toBe("60");
+    nodes["music-range"].value = "20";
+    nodes["music-range"].fire("input");
+    expect(audio.music).toBeCloseTo(0.2);
+    nodes["music-toggle"].fire("click");
+    expect(audio.music).toBe(0);
+    expect(nodes["music-toggle"].attrs["aria-label"]).toBe("Turn music on");
+    nodes["music-toggle"].fire("click");
+    expect(audio.music).toBeCloseTo(0.2);
   });
 });
