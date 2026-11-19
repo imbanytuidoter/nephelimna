@@ -32,5 +32,30 @@ export function createVolume({ audio }) {
   toggle.addEventListener("click", () => set(audio.volume > 0 ? 0 : before));
   render(audio.volume);
 
+  const musicBox = document.getElementById("music");
+  const musicToggle = document.getElementById("music-toggle");
+  const musicRange = document.getElementById("music-range");
+  let musicBefore = audio.music > 0 ? audio.music : 0.6;
+  const renderMusic = (level) => {
+    musicBox.dataset.level = levelName(level);
+    musicRange.value = String(Math.round(level * 100));
+    musicRange.setAttribute("aria-valuetext", level > 0 ? `${Math.round(level * 100)} percent` : "muted");
+    musicToggle.setAttribute("aria-label", level > 0 ? "Mute music" : "Turn music on");
+  };
+  const setMusic = (level) => {
+    const next = audio.setMusic(level);
+    if (next > 0) musicBefore = next;
+    renderMusic(next);
+    return next;
+  };
+  keepKeysInside(musicRange);
+  musicRange.addEventListener("input", () => setMusic(Number(musicRange.value) / 100));
+  musicRange.addEventListener("change", () => musicRange.blur());
+  musicToggle.addEventListener("click", () => setMusic(audio.music > 0 ? 0 : musicBefore));
+  audio.onMusic((level) => {
+    renderMusic(level);
+    musicBox.hidden = false;
+  });
+
   return { set };
 }
